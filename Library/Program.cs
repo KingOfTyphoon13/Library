@@ -1,9 +1,13 @@
-WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+using Library.Infrastructure.DI;
+
+var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
-WebApplication app = builder.Build();
+var app = builder.AddConfigurations()
+                            .AddServices()
+                            .Build();
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
@@ -15,8 +19,6 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseRouting();
-
-app.UseAuthorization();
 
 app.MapStaticAssets();
 
