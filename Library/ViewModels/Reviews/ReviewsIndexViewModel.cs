@@ -1,6 +1,6 @@
 ﻿namespace Library.ViewModels.Reviews;
 
-public class ReviewIndexViewModel
+public class ReviewsIndexViewModel
 {
     public List<ReviewListItemViewModel> RecentReviews { get; set; } = [];
 }

@@ -47,7 +47,7 @@ public class ReviewsController : BaseController
     public IActionResult Index()
     {
 
-        return View(new ReviewIndexViewModel { RecentReviews = _reviews });
+        return View(new ReviewsIndexViewModel { RecentReviews = _reviews });
     }
 
     public IActionResult Create(int? bookId)
