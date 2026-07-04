@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Library.ViewModels.Books;
 
-public abstract class BaseBookViewModel
+public class BookBaseViewModel
 {
     public int Id { get; set; }
 

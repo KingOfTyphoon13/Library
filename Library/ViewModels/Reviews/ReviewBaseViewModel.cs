@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Library.ViewModels.Reviews;
 
-public class BaseReviewViewModel
+public class ReviewBaseViewModel
 {
     public int Id { get; set; }
 

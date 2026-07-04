@@ -1,0 +1,15 @@
+﻿@model int
+@{
+    var score = Model;
+}
+<div class="score-bar" data-score="@score">
+    <div class="stars" aria-label="Score @score of 10">
+        @for (int i = 1; i <= 10; i++)
+        {
+            var hue = (i - 1) * 120.0 / 9;
+            var style = i <= score ? $"color: hsl({hue:F0}, 75%, 45%);" : "color: #ddd;";
+            <span class="star" style="@style">★</span>
+        }
+    </div>
+    <span class="score-number">@score/10</span>
+</div>

@@ -10,7 +10,7 @@ public class AuthorSlotViewModel
     public AuthorViewModel? NewAuthor { get; set; }
 }
 
-public class AddNewBookViewModel : BaseBookViewModel, IValidatableObject
+public class AddNewBookViewModel : BookBaseViewModel, IValidatableObject
 {
     public List<AuthorSlotViewModel> Authors { get; set; } = [];
 
