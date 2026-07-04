@@ -1,0 +1,8 @@
+﻿@model BookSummaryViewModel
+<div class="book-info">
+
+    <div class="book-card-title">@Model.Title</div>
+
+    <div class="book-card-year">@Model.PublicationYear</div>
+    <div class="book-card-authors">@string.Join(", ", Model.Authors.Select(a => $"{a.Name} {a.Surname}"))</div>
+</div>

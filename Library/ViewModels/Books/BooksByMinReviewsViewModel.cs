@@ -1,6 +1,6 @@
 ﻿namespace Library.ViewModels.Books;
 
-public class BookReviewStatsItemViewModel : BaseBookViewModel
+public class BookReviewStatsItemViewModel : BookBaseViewModel
 {
     public int ReviewCount { get; set; }
     public double AverageScore { get; set; }

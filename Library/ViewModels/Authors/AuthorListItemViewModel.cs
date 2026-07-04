@@ -1,6 +1,6 @@
 ﻿namespace Library.ViewModels.Authors;
 
-public class AuthorListItemViewModel : BaseAuthorViewModel
+public class AuthorListItemViewModel : AuthorViewModel
 {
     public int BookCount { get; set; }
 }
