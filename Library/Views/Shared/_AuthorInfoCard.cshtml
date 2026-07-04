@@ -1,0 +1,18 @@
+﻿@model AuthorListItemViewModel
+<div class="author-info">
+    <div class="author-card-icon">🖋️</div>
+    <div class="author-card-body">
+        <div class="author-card-row">
+            <span class="author-card-label">Name</span>
+            <span class="author-card-value">@Model.Name</span>
+        </div>
+        <div class="author-card-row">
+            <span class="author-card-label">Surname</span>
+            <span class="author-card-value">@Model.Surname</span>
+        </div>
+        <div class="author-card-row">
+            <span class="author-card-label">Published books 📖</span>
+            <span class="author-card-value">@Model.BookCount</span>
+        </div>
+    </div>
+</div>

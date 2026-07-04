@@ -1,11 +1,12 @@
-﻿@{
-    ViewData["Title"] = "Home";
-}
+﻿@model AuthorsIndexViewModel
 
-<div class="home-hero">
-    <div class="home-blocks">
-        <a class="home-block" asp-controller="Books" asp-action="Index">📚 Books</a>
-        <a class="home-block" asp-controller="Authors" asp-action="Index">✍️ Authors</a>
-        <a class="home-block" asp-controller="Reviews" asp-action="Index">⭐ Reviews</a>
-    </div>
+<h1 class="fw-bold mb-5 text-[2rem] text-center"> Authors</h1>
+
+<div class="review-grid">
+    @foreach (var author in Model.Authors)
+    {
+        <div class="review-card">
+            @await Html.PartialAsync("_AuthorInfoCard", author)
+        </div>
+    }
 </div>

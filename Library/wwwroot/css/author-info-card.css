@@ -1,0 +1,27 @@
+﻿.author-card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.author-card-row {
+    display: flex;
+    gap: 0.25rem;
+    font-size: 0.95rem;
+    line-height: 1.4;
+    flex-wrap: wrap;
+}
+
+.author-card-label {
+    font-weight: 700;
+    color: var(--color-text);
+    min-width: 130px;
+    flex-shrink: 0;
+}
+
+.author-card-value {
+    font-weight: 400;
+    color: var(--color-text);
+    min-width: 0;
+    word-break: break-word;
+}
