@@ -22,7 +22,7 @@ public class ReviewsController : BaseController
             Authors = [new() { Id = 6, Name = "Andy", Surname = "Weir" }] },
     ];
 
-    public IActionResult Index()
+    private static List<ReviewListItemViewModel> GetReviews()
     {
         var books = GetDummyBooks();
         var rnd = new Random();
@@ -39,6 +39,55 @@ public class ReviewsController : BaseController
             };
         }).ToList();
 
-        return View(new ReviewIndexViewModel { RecentReviews = reviews });
+        return reviews;
+    }
+
+    private static List<ReviewListItemViewModel> _reviews = GetReviews();
+
+    public IActionResult Index()
+    {
+
+        return View(new ReviewIndexViewModel { RecentReviews = _reviews });
+    }
+
+    public IActionResult Create(int? bookId)
+    {
+        var books = GetDummyBooks();
+        var model = new ReviewCreateViewModel();
+
+        if (bookId is not null)
+        {
+            model.Book = books.FirstOrDefault(b => b.Id == bookId);
+            model.BookId = model.Book?.Id ?? 0;
+        }
+        else
+        {
+            model.AvailableBooks = books;
+        }
+
+        return View(model);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public IActionResult Create(ReviewCreateViewModel model)
+    {
+        var books = GetDummyBooks();
+        model.Book = books.FirstOrDefault(b => b.Id == model.BookId);
+
+        if (!ModelState.IsValid)
+        {
+            if (model.Book is null)
+                model.AvailableBooks = books;
+
+            return View(model);
+        }
+
+        // TODO: persist via IReviewService once Service/DAL layers exist
+        TempData["Success"] = "Review submitted.";
+
+        _reviews.Add(new() { Id = _reviews.Count, BookId = model.BookId, BookSummary = model.Book, Score = model.Score });
+
+        return RedirectToAction(nameof(Index));
     }
 }

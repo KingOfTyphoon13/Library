@@ -8,6 +8,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/book-info-card.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/Library.styles.css" asp-append-version="true" />
 </head>
 <body>
@@ -24,6 +25,7 @@
             @RenderBody()
         </div>
     </main>
+    @await RenderSectionAsync("Scripts", required: false)
 @*     <header>
         <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
             <div class="container-fluid">
