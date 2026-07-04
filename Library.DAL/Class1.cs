@@ -1,7 +1,6 @@
-﻿namespace Library.DAL
-{
-    public class Class1
-    {
+﻿namespace Library.DAL;
 
-    }
+public class Class1
+{
+
 }
