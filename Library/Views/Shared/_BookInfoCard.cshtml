@@ -1,8 +1,18 @@
 ﻿@model BookSummaryViewModel
 <div class="book-info">
+    <div class="book-card-title">@Model?.Title</div>
 
-    <div class="book-card-title">@Model.Title</div>
+    <div class="book-card-row">
+        <span class="book-card-label">Published</span>
+        <span class="book-card-value">@Model?.PublicationYear</span>
+    </div>
 
-    <div class="book-card-year">@Model.PublicationYear</div>
-    <div class="book-card-authors">@string.Join(", ", Model.Authors.Select(a => $"{a.Name} {a.Surname}"))</div>
+    <div class="book-card-row">
+        <span class="book-card-label">Authors</span>
+        <span class="book-card-value">
+            @(Model?.Authors is { Count: > 0 }
+                ? string.Join(", ", Model.Authors.Select(a => $"{a.Name} {a.Surname}"))
+                : "Unknown author")
+        </span>
+    </div>
 </div>
