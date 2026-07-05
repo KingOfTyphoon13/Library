@@ -1,0 +1,39 @@
+﻿@model BooksByMinReviewsViewModel
+@{
+    ViewData["Title"] = "Books by Minimum Reviews";
+}
+
+<h1 class="fw-bold mb-4 text-center">Books by Minimum Reviews</h1>
+
+<form method="get" asp-action="ByMinReviews" class="row g-2 justify-content-center mb-4">
+    <div class="col-auto">
+        <input type="number" name="minReviewCount" class="form-control"
+               placeholder="Min review count" min="0"
+               value="@Model.MinReviewCount" />
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-primary">Filter</button>
+    </div>
+    @if (Model.MinReviewCount.HasValue)
+    {
+        <div class="col-auto">
+            <a asp-action="ByMinReviews" class="btn btn-outline-secondary">Clear</a>
+        </div>
+    }
+</form>
+
+@if (!Model.Results.Any())
+{
+    <p class="text-muted text-center">No books found.</p>
+}
+else
+{
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
+        @foreach (var book in Model.Results)
+        {
+            <div class="col">
+                <partial name="_BookInfoCard" model="book" />
+            </div>
+        }
+    </div>
+}

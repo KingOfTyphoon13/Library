@@ -37,6 +37,16 @@ public class BooksController : BaseController
         new() { Id = 84, Name = "Diana", Surname = "Reavs" },
     ];
 
+    private static List<BookReviewStatsItemViewModel> GetDummyBookStats() =>
+    [
+        new() { Id = 1, Title = "The Silent Patient", PublicationYear = 2019, ReviewCount = 12, AverageScore = 4.3 },
+        new() { Id = 2, Title = "Clean Code", PublicationYear = 2008, ReviewCount = 30, AverageScore = 4.7 },
+        new() { Id = 3, Title = "Good Omens", PublicationYear = 1990, ReviewCount = 8, AverageScore = 4.1 },
+        new() { Id = 4, Title = "Dune", PublicationYear = 1965, ReviewCount = 45, AverageScore = 4.8 },
+        new() { Id = 5, Title = "Project Hail Mary", PublicationYear = 2021, ReviewCount = 22, AverageScore = 4.6 },
+        new() { Id = 6, Title = "Dune Messiah", PublicationYear = 1969, ReviewCount = 5, AverageScore = 3.9 },
+];
+
     private static List<BookSummaryViewModel> GetDummyBooks() => _books;
 
     private static List<AuthorViewModel> GetDummyAuthors() => _authors;
@@ -51,6 +61,21 @@ public class BooksController : BaseController
             Results = publicationYear.HasValue
                 ? books.Where(b => b.PublicationYear == publicationYear.Value).ToList()
                 : books
+        };
+
+        return View(model);
+    }
+
+    public IActionResult ByMinReviews(int? minReviewCount)
+    {
+        var stats = GetDummyBookStats();
+
+        var model = new BooksByMinReviewsViewModel
+        {
+            MinReviewCount = minReviewCount,
+            Results = minReviewCount.HasValue
+                ? stats.Where(b => b.ReviewCount >= minReviewCount.Value).ToList()
+                : stats
         };
 
         return View(model);
