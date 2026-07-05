@@ -1,0 +1,31 @@
+﻿@model AuthorSlotViewModel
+@using Microsoft.AspNetCore.Mvc.Rendering
+@{
+    var availableAuthors = ViewData["AvailableAuthors"] as List<AuthorViewModel> ?? new();
+
+    var items = availableAuthors.Select(a => new SelectListItem
+    {
+        Value = a.Id.ToString(),
+        Text = $"{a.Name} {a.Surname}",
+        Selected = Model.ExistingAuthorId == a.Id
+    });
+}
+
+<div class="author-slot border rounded p-2 mb-2">
+    <div class="d-flex justify-content-between align-items-center mb-1">
+        <select asp-for="ExistingAuthorId" asp-items="@items" class="form-select form-select-sm author-select">
+            <option value="">-- New Author --</option>
+        </select>
+        <button type="button" class="btn btn-sm btn-outline-danger remove-author-btn ms-2">✕</button>
+    </div>
+
+    <div class="new-author-fields @(Model.ExistingAuthorId.HasValue ? "d-none" : "")">
+        <input asp-for="NewAuthor!.Name" class="form-control form-control-sm mb-1" placeholder="Name"
+               disabled="@(Model.ExistingAuthorId.HasValue ? "disabled" : null)" />
+        <span asp-validation-for="NewAuthor!.Name" class="text-danger small"></span>
+
+        <input asp-for="NewAuthor!.Surname" class="form-control form-control-sm" placeholder="Surname"
+               disabled="@(Model.ExistingAuthorId.HasValue ? "disabled" : null)" />
+        <span asp-validation-for="NewAuthor!.Surname" class="text-danger small"></span>
+    </div>
+</div>

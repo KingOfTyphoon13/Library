@@ -1,25 +1,16 @@
 ﻿using Library.ViewModels.Authors;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
 using System.ComponentModel.DataAnnotations;
 
 namespace Library.ViewModels.Books;
-
-public class AuthorSlotViewModel
-{
-    public int? ExistingAuthorId { get; set; }
-    public AuthorViewModel? NewAuthor { get; set; }
-}
 
 public class BookCreateViewModel : BookBaseViewModel, IValidatableObject
 {
     public List<AuthorSlotViewModel> Authors { get; set; } = [];
 
-    [BindNever]
     public List<AuthorViewModel> AvailableAuthors { get; set; } = [];
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
-
         var filledCount = Authors.Count(a => a.ExistingAuthorId.HasValue
             || !string.IsNullOrWhiteSpace(a.NewAuthor?.Name)
             || !string.IsNullOrWhiteSpace(a.NewAuthor?.Surname));

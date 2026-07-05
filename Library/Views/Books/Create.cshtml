@@ -1,0 +1,124 @@
+﻿
+@model BookCreateViewModel
+@{
+    ViewData["Title"] = "Add Book";
+}
+
+<h1 class="fw-bold mb-5 text-center">Add Book</h1>
+
+<form asp-action="Create" method="post" id="bookForm">
+    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+    <div class="row">
+        <div class="col-lg-7">
+            <div class="card">
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label asp-for="Title" class="form-label"></label>
+                        <input asp-for="Title" class="form-control" />
+                        <span asp-validation-for="Title" class="text-danger"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="PublicationYear" class="form-label"></label>
+                        <input asp-for="PublicationYear" class="form-control" />
+                        <span asp-validation-for="PublicationYear" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h5 class="mb-0">Authors</h5>
+                        <span class="text-muted small"><span id="authorCount">0</span>/5</span>
+                    </div>
+
+                    <span asp-validation-for="Authors" class="text-danger d-block mb-2"></span>
+
+                    <div id="authorSlots">
+                        @Html.EditorFor(m => m.Authors, new { AvailableAuthors = Model.AvailableAuthors })
+                    </div>
+
+                    <button type="button" id="addAuthorBtn" class="btn btn-outline-primary btn-sm mt-2">
+                        + Add Author
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary mt-3">Save Book</button>
+</form>
+
+@{
+    var templateViewData = new ViewDataDictionary(ViewData);
+    templateViewData.TemplateInfo.HtmlFieldPrefix = "Authors[__index__]";
+    templateViewData["AvailableAuthors"] = Model.AvailableAuthors;
+}
+<template id="authorSlotTemplate">
+    @await Html.PartialAsync("EditorTemplates/AuthorSlotViewModel", new AuthorSlotViewModel(), templateViewData)
+</template>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function () {
+            const slotsContainer = document.getElementById('authorSlots');
+            const addBtn = document.getElementById('addAuthorBtn');
+            const countEl = document.getElementById('authorCount');
+            const templateHtml = document.getElementById('authorSlotTemplate').innerHTML;
+            const MAX_AUTHORS = 5;
+            let slotIndex = @Model.Authors.Count;
+
+            function reindex() {
+                const slots = slotsContainer.querySelectorAll('.author-slot');
+                slots.forEach((slot, i) => {
+                    slot.querySelectorAll('[name]').forEach(el => {
+                        el.name = el.name.replace(/Authors\[\d+\]/, `Authors[${i}]`);
+                    });
+                    slot.querySelectorAll('[id]').forEach(el => {
+                        el.id = el.id.replace(/Authors_\d+_/, `Authors_${i}_`);
+                    });
+                });
+                slotIndex = slots.length;
+                countEl.textContent = slots.length;
+                addBtn.disabled = slots.length >= MAX_AUTHORS;
+            }
+
+            function wireSlot(slot) {
+                const select = slot.querySelector('.author-select');
+                const newFields = slot.querySelector('.new-author-fields');
+                const removeBtn = slot.querySelector('.remove-author-btn');
+
+                function toggle() {
+                    const isNew = select.value === '';
+                    newFields.classList.toggle('d-none', !isNew);
+                    newFields.querySelectorAll('input').forEach(inp => inp.disabled = !isNew);
+                }
+                select.addEventListener('change', toggle);
+                toggle();
+
+                removeBtn.addEventListener('click', () => {
+                    slot.remove();
+                    reindex();
+                });
+            }
+
+            addBtn.addEventListener('click', () => {
+                if (slotIndex >= MAX_AUTHORS) return;
+                const html = templateHtml.replace(/__index__/g, slotIndex);
+                const wrapper = document.createElement('div');
+                wrapper.innerHTML = html.trim();
+                const slot = wrapper.firstElementChild;
+                slotsContainer.appendChild(slot);
+                wireSlot(slot);
+                reindex();
+            });
+
+            slotsContainer.querySelectorAll('.author-slot').forEach(wireSlot);
+            reindex();
+        })();
+    </script>
+}
