@@ -1,0 +1,13 @@
+﻿.stars {
+    display: flex;
+    gap: 2px;
+}
+
+.star {
+    font-size: 1.25rem;
+    line-height: 1;
+}
+
+.score-number {
+    font-weight: 600;
+}
