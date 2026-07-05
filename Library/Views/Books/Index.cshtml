@@ -1,11 +1,58 @@
-﻿@{
-    ViewData["Title"] = "Home";
-}
+﻿@model BooksByYearViewModel
 
-<div class="home-hero">
-    <div class="home-blocks">
-        <a class="home-block" asp-controller="Books" asp-action="Index">📚 Books</a>
-        <a class="home-block" asp-controller="Authors" asp-action="Index">✍️ Authors</a>
-        <a class="home-block" asp-controller="Reviews" asp-action="Index">⭐ Reviews</a>
+<h1 class="fw-bold mb-5 text-[2rem] text-center">Books</h1>
+
+<form method="get" asp-action="Index" class="mb-4 d-flex align-items-end gap-2">
+    <div>
+        <label asp-for="PublicationYear"></label>
+        <input asp-for="PublicationYear" type="number" class="form-control" placeholder="e.g. 2019" />
+        <span asp-validation-for="PublicationYear" class="text-danger"></span>
     </div>
+    <button type="submit" class="btn btn-primary">Filter</button>
+    @if (Model.PublicationYear.HasValue)
+    {
+        <a asp-action="Index" class="btn btn-outline-secondary">Clear</a>
+    }
+</form>
+
+<div class="review-grid">
+    @foreach (var book in Model.Results)
+    {
+        <div class="review-card book-context-target" data-book-id="@book.Id">
+            @await Html.PartialAsync("_BookInfoCard", book)
+        </div>
+    }
 </div>
+
+<div id="bookContextMenu" class="book-context-menu" style="display:none;">
+    <a href="#" id="bookContextWriteReview">Write review</a>
+</div>
+@* TODO relocate dropdown menu logic/view to _BookInfoCard view component *@
+@section Scripts {
+    <script>
+        (function () {
+            const menu = document.getElementById('bookContextMenu');
+            const writeReviewLink = document.getElementById('bookContextWriteReview');
+            let activeBookId = null;
+
+            document.querySelectorAll('.book-context-target').forEach(card => {
+                card.addEventListener('contextmenu', e => {
+                    e.preventDefault();
+                    activeBookId = card.dataset.bookId;
+                    menu.style.left = e.pageX + 'px';
+                    menu.style.top = e.pageY + 'px';
+                    menu.style.display = 'block';
+                });
+            });
+
+            writeReviewLink.addEventListener('click', e => {
+                e.preventDefault();
+                if (activeBookId) {
+                    window.location.href = '@Url.Action("Create", "Reviews")?bookId=' + activeBookId;
+                }
+            });
+
+            document.addEventListener('click', () => { menu.style.display = 'none'; });
+        })();
+    </script>
+}

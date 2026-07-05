@@ -98,19 +98,7 @@ body {
     margin-top: 0.5rem;
 }
 
-.stars {
-    display: flex;
-    gap: 2px;
-}
 
-.star {
-    font-size: 1.25rem;
-    line-height: 1;
-}
-
-.score-number {
-    font-weight: 600;
-}
 
 .review-grid {
     display: grid;
@@ -129,3 +117,24 @@ body {
     box-shadow: var(--shadow-block);
     padding: 1rem;
 }
+
+.book-context-menu {
+    position: absolute;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    box-shadow: var(--shadow-block);
+    padding: 0.25rem 0;
+    z-index: 1000;
+}
+
+    .book-context-menu a {
+        display: block;
+        padding: 0.5rem 1rem;
+        color: var(--color-text);
+        text-decoration: none;
+    }
+
+        .book-context-menu a:hover {
+            background: #f0f0f0;
+        }

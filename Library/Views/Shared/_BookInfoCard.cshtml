@@ -1,18 +1,29 @@
-﻿@model BookSummaryViewModel
-<div class="book-info">
-    <div class="book-card-title">@Model?.Title</div>
+﻿@model BookBaseViewModel
+<div class="book-info @ViewData["BookInfoSizeClass"]" data-book-id="@Model.Id">
+    <div class="book-card-title">@Model.Title</div>
 
     <div class="book-card-row">
         <span class="book-card-label">Published</span>
-        <span class="book-card-value">@Model?.PublicationYear</span>
+        <span class="book-card-value">@Model.PublicationYear</span>
     </div>
 
-    <div class="book-card-row">
-        <span class="book-card-label">Authors</span>
-        <span class="book-card-value">
-            @(Model?.Authors is { Count: > 0 }
-                ? string.Join(", ", Model.Authors.Select(a => $"{a.Name} {a.Surname}"))
-                : "Unknown author")
-        </span>
-    </div>
+    @if (Model is BookSummaryViewModel summary)
+    {
+        <div class="book-card-row">
+            <span class="book-card-label">Authors</span>
+            <span class="book-card-value">
+                @(summary.Authors is { Count: > 0 }
+                    ? string.Join(", ", summary.Authors.Select(a => $"{a.Name} {a.Surname}"))
+                    : "Unknown author")
+            </span>
+        </div>
+    }
+
+    @if (Model is BookReviewStatsItemViewModel stats)
+    {
+        <div class="book-card-row">
+            <span class="book-card-label">Reviews</span>
+            <span class="book-card-value">@stats.ReviewCount (avg @stats.AverageScore.ToString("F1"))</span>
+        </div>
+    }
 </div>
