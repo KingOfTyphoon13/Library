@@ -1,23 +1,26 @@
-﻿using Library.ViewModels.Authors;
+﻿using AutoMapper;
+using Library.Domain.Services.AuthorsService;
+using Library.ViewModels.Authors;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Library.Controllers;
 
 public class AuthorsController : BaseController
 {
-    private static List<AuthorListItemViewModel> GetDummyAuthors() =>
-    [
-       new() { Id = 1, Name = "Alex", Surname = "Michaelides", BookCount = 1 },
-        new() { Id = 2, Name = "Robert", Surname = "Martin", BookCount = 3 },
-        new() { Id = 3, Name = "Terry", Surname = "Pratchett", BookCount = 5 },
-        new() { Id = 4, Name = "Neil", Surname = "Gaiman", BookCount = 4 },
-        new() { Id = 5, Name = "Frank", Surname = "Herbert", BookCount = 2 },
-        new() { Id = 6, Name = "Andy", Surname = "Weir", BookCount = 1 },
-    ];
+    private readonly IAuthorsService _authorsService;
+    public AuthorsController(IAuthorsService authorsService, IMapper mapper, ILogger<AuthorsController> logger) : base(mapper, logger)
+    {
+        _authorsService = authorsService;
+    }
 
     public IActionResult Index()
     {
-        var model = new AuthorsIndexViewModel { Authors = GetDummyAuthors() };
+        var authors = _authorsService.GetAuthorWithBooksCounts()
+                            .Select(a => _mapper.Map<AuthorListItemViewModel>(a))
+                            .ToList();
+
+        var model = new AuthorsIndexViewModel { Authors = authors };
+
         return View(model);
     }
 }
