@@ -11,51 +11,6 @@ namespace Library.Controllers;
 
 public class BooksController : BaseController
 {
-    //    private static readonly List<BookSummaryViewModel> _books = [
-    //        new() { Id = 1, Title = "The Silent Patient", PublicationYear = 2019,
-    //            Authors = [new() { Id = 1, Name = "Alex", Surname = "Michaelides" }] },
-    //        new() { Id = 2, Title = "Clean Code", PublicationYear = 2008,
-    //            Authors = [new() { Id = 2, Name = "Robert", Surname = "Martin" }] },
-    //        new() { Id = 3, Title = "Good Omens", PublicationYear = 1990,
-    //            Authors = [
-    //                new() { Id = 3, Name = "Terry", Surname = "Pratchett" },
-    //                new() { Id = 4, Name = "Neil", Surname = "Gaiman" },
-    //                new() { Id = 7, Name = "Kail", Surname = "Mosh" },
-    //                new() { Id = 84, Name = "Diana", Surname = "Reavs" } ] },
-    //        new () { Id = 4, Title = "Dune", PublicationYear = 1965,
-    //            Authors = [new() { Id = 5, Name = "Frank", Surname = "Herbert" }] },
-    //        new() { Id = 5, Title = "Project Hail Mary", PublicationYear = 2021,
-    //            Authors = [new() { Id = 6, Name = "Andy", Surname = "Weir" }] },
-    //        new() { Id = 6, Title = "Dune Messiah", PublicationYear = 1969,
-    //            Authors = [new() { Id = 5, Name = "Frank", Surname = "Herbert" }] },
-    //    ];
-
-    //    private static readonly List<AuthorViewModel> _authors =
-    //    [
-    //        new() { Id = 1, Name = "Alex", Surname = "Michaelides" },
-    //        new() { Id = 2, Name = "Robert", Surname = "Martin" },
-    //        new() { Id = 3, Name = "Terry", Surname = "Pratchett" },
-    //        new() { Id = 4, Name = "Neil", Surname = "Gaiman" },
-    //        new() { Id = 5, Name = "Frank", Surname = "Herbert" },
-    //        new() { Id = 6, Name = "Andy", Surname = "Weir" },
-    //        new() { Id = 7, Name = "Kail", Surname = "Mosh" },
-    //        new() { Id = 84, Name = "Diana", Surname = "Reavs" },
-    //    ];
-
-    //    private static List<BookReviewStatsItemViewModel> GetDummyBookStats() =>
-    //    [
-    //        new() { Id = 1, Title = "The Silent Patient", PublicationYear = 2019, ReviewCount = 12, AverageScore = 4.3 },
-    //        new() { Id = 2, Title = "Clean Code", PublicationYear = 2008, ReviewCount = 30, AverageScore = 4.7 },
-    //        new() { Id = 3, Title = "Good Omens", PublicationYear = 1990, ReviewCount = 8, AverageScore = 4.1 },
-    //        new() { Id = 4, Title = "Dune", PublicationYear = 1965, ReviewCount = 45, AverageScore = 4.8 },
-    //        new() { Id = 5, Title = "Project Hail Mary", PublicationYear = 2021, ReviewCount = 22, AverageScore = 4.6 },
-    //        new() { Id = 6, Title = "Dune Messiah", PublicationYear = 1969, ReviewCount = 5, AverageScore = 3.9 },
-    //];
-
-    //    private static List<BookSummaryViewModel> GetDummyBooks() => _books;
-
-    //    private static List<AuthorViewModel> GetDummyAuthors() => _authors;
-
     private readonly IBooksService _bookService;
     private readonly IAuthorsService _authorsService;
 

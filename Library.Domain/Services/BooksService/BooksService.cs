@@ -2,6 +2,7 @@
 using Library.Domain.DTOs.Books;
 using Library.Domain.Services.AuthorsService;
 using Microsoft.Extensions.Logging;
+using System.ComponentModel.DataAnnotations;
 
 namespace Library.Domain.Services.BooksService;
 
@@ -40,16 +41,16 @@ public class BooksService : BaseService, IBooksService
     }
     public async Task AddBook(CreateBookDTO newBook)
     {
-        await _unitOfWork.BeginTransactionAsync();
+        if (newBook.Authors.Count > 5)
+            throw new ValidationException("Max 5 authors per book.");
 
-        foreach (var author in newBook.Authors)
+        await _unitOfWork.ExecuteTransactionAsync(async () =>
         {
-            if (author.Id == 0)
-                await _authorsService.AddAuthorAsync(author);
-        }
+            foreach (var author in newBook.Authors.Where(a => a.Id == 0))
+                author.Id = await _unitOfWork.Authors.AddAsync(author);
 
-        await _booksRepository.AddAsync(newBook);
+            await _unitOfWork.Books.AddAsync(newBook);
+        });
 
-        await _unitOfWork.CommitAsync();
     }
 }

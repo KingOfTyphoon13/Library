@@ -19,31 +19,29 @@ public class UnitOfWork : IUnitOfWork
     {
         _connection = new SqlConnection(connectionString);
 
-        Books = new BooksRepository(_connection, TransactionFactory);
-        Authors = new AuthorsRepository(_connection, TransactionFactory);
-        Reviews = new ReviewsRepository(_connection, TransactionFactory);
+        Books = new BooksRepository(_connection, TransactionFactory, OpenConnectionAsync);
+        Authors = new AuthorsRepository(_connection, TransactionFactory, OpenConnectionAsync);
+        Reviews = new ReviewsRepository(_connection, TransactionFactory, OpenConnectionAsync);
 
     }
 
-    public async Task BeginTransactionAsync()
+    public async Task ExecuteTransactionAsync(Func<Task> transaction)
     {
-        if (_connection.State != ConnectionState.Open)
-            await _connection.OpenAsync();
+        OpenConnectionAsync();
+
         _transaction = (SqlTransaction)await _connection.BeginTransactionAsync();
-    }
 
-    public async Task CommitAsync()
-    {
-        await _transaction!.CommitAsync();
-        await _transaction.DisposeAsync();
-        _transaction = null;
-    }
+        try
+        {
+            await transaction();
 
-    public async Task RollbackAsync()
-    {
-        await _transaction!.RollbackAsync();
-        await _transaction.DisposeAsync();
-        _transaction = null;
+            await CommitAsync();
+        }
+        catch
+        {
+            await RollbackAsync();
+            throw;
+        }
     }
 
     public async ValueTask DisposeAsync()
@@ -52,5 +50,25 @@ public class UnitOfWork : IUnitOfWork
         await _connection.DisposeAsync();
     }
 
+    private async Task CommitAsync()
+    {
+        await _transaction!.CommitAsync();
+        await _transaction.DisposeAsync();
+        _transaction = null;
+    }
+
+    private async Task RollbackAsync()
+    {
+        await _transaction!.RollbackAsync();
+        await _transaction.DisposeAsync();
+        _transaction = null;
+    }
+
     private SqlTransaction? TransactionFactory() => _transaction;
+
+    private async Task OpenConnectionAsync()
+    {
+        if (_connection.State != ConnectionState.Open)
+            await _connection.OpenAsync();
+    }
 }

@@ -6,7 +6,7 @@ namespace Library.DAL.DataAccess;
 
 internal class AuthorsRepository : BaseRepository, IAuthorsRepository
 {
-    public AuthorsRepository(SqlConnection connection, Func<SqlTransaction?> transaction) : base(connection, transaction)
+    public AuthorsRepository(SqlConnection connection, Func<SqlTransaction?> transaction, Func<Task?> openDbConnection) : base(connection, transaction, openDbConnection)
     {
     }
 
