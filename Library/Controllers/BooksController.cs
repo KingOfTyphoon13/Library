@@ -1,4 +1,5 @@
-﻿using Library.ViewModels.Authors;
+﻿using AutoMapper;
+using Library.ViewModels.Authors;
 using Library.ViewModels.Books;
 using Microsoft.AspNetCore.Mvc;
 
@@ -50,6 +51,10 @@ public class BooksController : BaseController
     private static List<BookSummaryViewModel> GetDummyBooks() => _books;
 
     private static List<AuthorViewModel> GetDummyAuthors() => _authors;
+
+    public BooksController(IMapper mapper, ILogger<BaseController> logger) : base(mapper, logger)
+    {
+    }
 
     public IActionResult Index(int? publicationYear)
     {

@@ -1,4 +1,5 @@
-﻿using Library.ViewModels.Books;
+﻿using AutoMapper;
+using Library.ViewModels.Books;
 using Library.ViewModels.Reviews;
 using Microsoft.AspNetCore.Mvc;
 
@@ -43,6 +44,10 @@ public class ReviewsController : BaseController
     }
 
     private static List<ReviewListItemViewModel> _reviews = GetReviews();
+
+    public ReviewsController(IMapper mapper, ILogger<BaseController> logger) : base(mapper, logger)
+    {
+    }
 
     public IActionResult Index()
     {
