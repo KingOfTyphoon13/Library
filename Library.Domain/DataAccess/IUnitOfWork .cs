@@ -6,9 +6,5 @@ public interface IUnitOfWork : IAsyncDisposable
     IAuthorsRepository Authors { get; }
     IReviewsRepository Reviews { get; }
 
-    Task BeginTransactionAsync();
-
-    Task CommitAsync();
-
-    Task RollbackAsync();
+    Task ExecuteTransactionAsync(Func<Task> transaction);
 }
