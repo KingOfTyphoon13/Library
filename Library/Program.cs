@@ -1,4 +1,5 @@
 using Library.Infrastructure.DI;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,6 +9,7 @@ builder.Services.AddControllersWithViews();
 var app = builder.AddConfigurations()
                             .AddServices()
                             .Build();
+app.UseSerilogRequestLogging();
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())

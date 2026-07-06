@@ -1,21 +1,24 @@
-﻿using Library.Domain.DTOs.Reviews;
+﻿using Library.Domain.DataAccess;
+using Library.Domain.DTOs.Reviews;
 using Microsoft.Extensions.Logging;
 
 namespace Library.Domain.Services.ReviewService;
 
 public class ReviewService : BaseService, IReviewService
 {
+    private readonly IReviewRepository _reviewRepository;
 
-    public ReviewService(ILogger<BaseService> logger) : base(logger)
+    public ReviewService(IUnitOfWork unitOfWork, ILogger<BaseService> logger) : base(unitOfWork, logger)
     {
+        _reviewRepository = _unitOfWork.Reviews;
     }
 
-    public List<ReviewDTO> GetReviews()
+    public async Task<List<ReviewDTO>> GetReviewsAsync()
     {
-        throw new NotImplementedException();
+        return await _reviewRepository.GetReviewsAsync();
     }
 
-    public void SaveReview(ReviewDTO review)
+    public Task SaveReviewAsync(ReviewDTO review)
     {
         throw new NotImplementedException();
     }
