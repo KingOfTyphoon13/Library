@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Library.Domain.Services.ReviewService;
 using Library.ViewModels.Books;
 using Library.ViewModels.Reviews;
 using Microsoft.AspNetCore.Mvc;
@@ -7,6 +8,8 @@ namespace Library.Controllers;
 
 public class ReviewsController : BaseController
 {
+    private readonly IReviewService _reviewService;
+
     private static List<BookSummaryViewModel> GetDummyBooks() =>
     [
         new() { Id = 1, Title = "The Silent Patient", PublicationYear = 2019,
@@ -45,14 +48,20 @@ public class ReviewsController : BaseController
 
     private static List<ReviewListItemViewModel> _reviews = GetReviews();
 
-    public ReviewsController(IMapper mapper, ILogger<BaseController> logger) : base(mapper, logger)
+    public ReviewsController(IReviewService reviewService, IMapper mapper, ILogger<ReviewsController> logger) : base(mapper, logger)
     {
+        _reviewService = reviewService ?? throw new ArgumentNullException(nameof(reviewService));
     }
 
     public IActionResult Index()
     {
+        var reviews = _reviewService.GetReviews()
+                            .Select(_mapper.Map<ReviewListItemViewModel>)
+                            .ToList();
 
-        return View(new ReviewsIndexViewModel { RecentReviews = _reviews });
+        var model = new ReviewsIndexViewModel { RecentReviews = reviews };
+
+        return View(model);
     }
 
     public IActionResult Create(int? bookId)
