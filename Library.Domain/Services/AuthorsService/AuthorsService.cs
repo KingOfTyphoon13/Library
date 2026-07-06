@@ -1,36 +1,33 @@
-﻿using Library.Domain.DTOs.Authors;
+﻿using Library.Domain.DataAccess;
+using Library.Domain.DTOs.Authors;
 using Microsoft.Extensions.Logging;
 
 namespace Library.Domain.Services.AuthorsService;
 
 public class AuthorsService : BaseService, IAuthorsService
 {
-    private static List<AuthorWithBooksCountDTO> _authorWithBooksCounts =
-    [
-        new() { Id = 1, Name = "Alex", Surname = "Michaelides", Count = 1 },
-        new() { Id = 2, Name = "Robert", Surname = "Martin", Count = 3 },
-        new() { Id = 3, Name = "Terry", Surname = "Pratchett", Count = 5 },
-        new() { Id = 4, Name = "Neil", Surname = "Gaiman", Count = 4 },
-        new() { Id = 5, Name = "Frank", Surname = "Herbert", Count = 2 },
-        new() { Id = 6, Name = "Andy", Surname = "Weir", Count = 1 },
-    ];
+    private readonly IAuthorRepository _authorRepository;
 
-    private static List<AuthorWithBooksCountDTO> GetDummyAuthors() => _authorWithBooksCounts;
-
-    public AuthorsService(ILogger<AuthorsService> logger) : base(logger)
+    public AuthorsService(IUnitOfWork unitOfWork, ILogger<AuthorsService> logger) : base(unitOfWork, logger)
     {
+        _authorRepository = _unitOfWork.Authors;
     }
 
-    public List<AuthorWithBooksCountDTO> GetAuthorWithBooksCounts()
+    public async Task<List<AuthorDTO>> GetAuthorsAsync()
     {
-        return GetDummyAuthors();
+        return await _authorRepository.GetAuthors();
     }
 
-    public void AddAuthor(AuthorDTO newAuthor)
+    public async Task<List<AuthorWithBooksCountDTO>> GetAuthorWithBooksCountsAsync()
+    {
+        return await _authorRepository.GetAllWithBookCountAsync();
+    }
+
+    public async Task AddAuthorAsync(AuthorDTO newAuthor)
     {
         if (string.IsNullOrWhiteSpace(newAuthor.Name) && string.IsNullOrWhiteSpace(newAuthor.Surname))
             throw new ArgumentException("Either Name or Surname must be provided.", nameof(newAuthor));
 
-        //_authorWithBooksCounts.Add
+        await _authorRepository.AddAsync(newAuthor);
     }
 }

@@ -4,7 +4,9 @@ namespace Library.Domain.Services.AuthorsService;
 
 public interface IAuthorsService
 {
-    List<AuthorWithBooksCountDTO> GetAuthorWithBooksCounts();
+    Task<List<AuthorDTO>> GetAuthorsAsync();
 
-    void AddAuthor(AuthorDTO newAuthor);
+    Task<List<AuthorWithBooksCountDTO>> GetAuthorWithBooksCountsAsync();
+
+    Task AddAuthorAsync(AuthorDTO newAuthor);
 }

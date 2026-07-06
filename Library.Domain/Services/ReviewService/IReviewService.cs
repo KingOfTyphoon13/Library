@@ -4,7 +4,7 @@ namespace Library.Domain.Services.ReviewService;
 
 public interface IReviewService
 {
-    List<ReviewDTO> GetReviews();
+    Task<List<ReviewDTO>> GetReviewsAsync();
 
-    void SaveReview(ReviewDTO review);
+    Task SaveReviewAsync(ReviewDTO review);
 }

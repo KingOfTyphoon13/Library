@@ -13,9 +13,9 @@ public class AuthorsController : BaseController
         _authorsService = authorsService;
     }
 
-    public IActionResult Index()
+    public async Task<IActionResult> Index()
     {
-        var authors = _authorsService.GetAuthorWithBooksCounts()
+        var authors = (await _authorsService.GetAuthorWithBooksCountsAsync())
                             .Select(a => _mapper.Map<AuthorListItemViewModel>(a))
                             .ToList();
 

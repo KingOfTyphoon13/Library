@@ -5,5 +5,6 @@ namespace Library.Domain.DataAccess;
 public interface IReviewRepository
 {
     Task<int> AddAsync(ReviewDTO dto);
-    Task<List<ReviewDTO>> GetByBookIdAsync(int bookId);
+
+    Task<List<ReviewDTO>> GetReviewsAsync();
 }
