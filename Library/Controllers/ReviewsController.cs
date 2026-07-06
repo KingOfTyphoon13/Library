@@ -42,7 +42,7 @@ public class ReviewsController : BaseController
         }
         else
         {
-            model.AvailableBooks = (await _bookService.GetBookWithAuthorsAsync())
+            model.AvailableBooks = (await _bookService.GetBooksWithAuthorsAsync())
                 .Select(_mapper.Map<BookSummaryViewModel>)
                 .ToList();
         }
@@ -60,7 +60,7 @@ public class ReviewsController : BaseController
         if (!ModelState.IsValid || model.Book is null)
         {
             if (model.Book is null)
-                model.AvailableBooks = (await _bookService.GetBookWithAuthorsAsync())
+                model.AvailableBooks = (await _bookService.GetBooksWithAuthorsAsync())
                     .Select(_mapper.Map<BookSummaryViewModel>)
                     .ToList();
             return View(model);

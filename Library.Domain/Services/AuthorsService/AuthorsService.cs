@@ -6,7 +6,7 @@ namespace Library.Domain.Services.AuthorsService;
 
 public class AuthorsService : BaseService, IAuthorsService
 {
-    private readonly IAuthorRepository _authorRepository;
+    private readonly IAuthorsRepository _authorRepository;
 
     public AuthorsService(IUnitOfWork unitOfWork, ILogger<AuthorsService> logger) : base(unitOfWork, logger)
     {

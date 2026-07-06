@@ -6,7 +6,7 @@ namespace Library.Domain.Services.ReviewService;
 
 public class ReviewService : BaseService, IReviewService
 {
-    private readonly IReviewRepository _reviewRepository;
+    private readonly IReviewsRepository _reviewRepository;
 
     public ReviewService(IUnitOfWork unitOfWork, ILogger<BaseService> logger) : base(unitOfWork, logger)
     {

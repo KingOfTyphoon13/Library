@@ -2,7 +2,7 @@
 
 namespace Library.Domain.DataAccess;
 
-public interface IAuthorRepository
+public interface IAuthorsRepository
 {
     Task<List<AuthorDTO>> GetAuthors();
 
