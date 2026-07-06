@@ -4,9 +4,9 @@ namespace Library.Domain.Services.BooksService;
 
 public interface IBooksService
 {
-    Task<List<BookWithAuthorsDTO>> GetBookWithAuthorsAsync();
+    Task<List<BookWithAuthorsDTO>> GetBooksWithAuthorsAsync();
     Task<List<BookWithAuthorsDTO>> GetBooksWithAuthorsAsync(int? publicationYear);
-    Task<List<BookWithAuthorsDTO>> GetBookWithMinReviewCountAsync(int? minReviewCount);
+    Task<List<BookReviewStatsDTO>> GetBookWithMinReviewCountAsync(int? minReviewCount);
 
     Task<BookDTO?> GetBookByIdAsync(int id);
 

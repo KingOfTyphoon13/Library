@@ -2,11 +2,13 @@
 
 public interface IUnitOfWork : IAsyncDisposable
 {
-    IBookRepository Books { get; }
-    IAuthorRepository Authors { get; }
-    IReviewRepository Reviews { get; }
+    IBooksRepository Books { get; }
+    IAuthorsRepository Authors { get; }
+    IReviewsRepository Reviews { get; }
 
     Task BeginTransactionAsync();
+
     Task CommitAsync();
+
     Task RollbackAsync();
 }

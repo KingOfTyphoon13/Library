@@ -1,36 +1,55 @@
 ﻿using Library.Domain.DataAccess;
 using Library.Domain.DTOs.Books;
+using Library.Domain.Services.AuthorsService;
 using Microsoft.Extensions.Logging;
 
 namespace Library.Domain.Services.BooksService;
 
 public class BooksService : BaseService, IBooksService
 {
-    public BooksService(IUnitOfWork unitOfWork, ILogger<BaseService> logger) : base(unitOfWork, logger)
+    private readonly IBooksRepository _booksRepository;
+    private readonly IAuthorsService _authorsService;
+
+    public BooksService(IAuthorsService authorsService, IUnitOfWork unitOfWork, ILogger<BaseService> logger) : base(unitOfWork, logger)
     {
+        _authorsService = authorsService ?? throw new ArgumentNullException(nameof(authorsService));
+
+        _booksRepository = _unitOfWork.Books;
     }
 
-    public Task<BookDTO?> GetBookByIdAsync(int id)
+    public async Task<BookDTO?> GetBookByIdAsync(int id)
     {
-        throw new NotImplementedException();
+        return await _booksRepository.GetByIdAsync(id);
     }
 
-    public Task<List<BookWithAuthorsDTO>> GetBooksWithAuthorsAsync(int? publicationYear)
+    public async Task<List<BookWithAuthorsDTO>> GetBooksWithAuthorsAsync()
     {
-        throw new NotImplementedException();
+        return await _booksRepository.GetBooksAsync();
     }
 
-    public Task<List<BookWithAuthorsDTO>> GetBookWithAuthorsAsync()
+    public async Task<List<BookWithAuthorsDTO>> GetBooksWithAuthorsAsync(int? publicationYear)
     {
-        throw new NotImplementedException();
+        var books = await _booksRepository.GetByPublicationYearAsync((int)publicationYear);
+        return books;
     }
 
-    public Task<List<BookWithAuthorsDTO>> GetBookWithMinReviewCountAsync(int? minReviewCount)
+    public async Task<List<BookReviewStatsDTO>> GetBookWithMinReviewCountAsync(int? minReviewCount)
     {
-        throw new NotImplementedException();
+        var books = await _booksRepository.GetByMinReviewCountAsync((int)minReviewCount);
+        return books;
     }
-    public Task AddBook(CreateBookDTO newBook)
+    public async Task AddBook(CreateBookDTO newBook)
     {
-        throw new NotImplementedException();
+        await _unitOfWork.BeginTransactionAsync();
+
+        foreach (var author in newBook.Authors)
+        {
+            if (author.Id == 0)
+                await _authorsService.AddAuthorAsync(author);
+        }
+
+        await _booksRepository.AddAsync(newBook);
+
+        await _unitOfWork.CommitAsync();
     }
 }
