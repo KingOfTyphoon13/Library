@@ -15,8 +15,8 @@ public class ReviewService : BaseService, IReviewService
 
     public async Task<List<ReviewWithBookInfoDTO>> GetReviewsAsync()
     {
-
-        return await _reviewRepository.GetReviewsAsync();
+        var reviews = await _reviewRepository.GetReviewsAsync();
+        return reviews;
     }
 
     public async Task SaveReviewAsync(ReviewDTO review)

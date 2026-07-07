@@ -1,4 +1,5 @@
 ﻿using Library.Domain.DataAccess;
+using Library.Domain.DTOs.Authors;
 using Library.Domain.DTOs.Books;
 using Library.Domain.DTOs.Reviews;
 using Microsoft.Data.SqlClient;
@@ -14,13 +15,18 @@ internal class ReviewsRepository : BaseRepository, IReviewsRepository
     public async Task<List<ReviewWithBookInfoDTO>> GetReviewsAsync()
     {
         const string sql = @"
-        SELECT r.id, r.book_id, r.score,
-               b.title, b.publication_year
+        SELECT 
+            r.id, r.book_id, r.score,
+            b.title, b.publication_year,
+            a.id AS author_id, a.name, a.surname
         FROM reviews r
         JOIN books b ON b.id = r.book_id
-        ORDER BY r.id";
+        JOIN bookauthors ba ON ba.book_id = b.id
+        JOIN authors a ON a.id = ba.author_id
+        ORDER BY r.id, b.id";
 
         var result = new List<ReviewWithBookInfoDTO>();
+        var reviewDict = new Dictionary<int, ReviewWithBookInfoDTO>();
 
         await _openDbConnectionAsync();
 
@@ -32,21 +38,42 @@ internal class ReviewsRepository : BaseRepository, IReviewsRepository
         var scoreOrd = reader.GetOrdinal("score");
         var titleOrd = reader.GetOrdinal("title");
         var yearOrd = reader.GetOrdinal("publication_year");
+        var authorIdOrd = reader.GetOrdinal("author_id");
+        var nameOrd = reader.GetOrdinal("name");
+        var surnameOrd = reader.GetOrdinal("surname");
 
         while (await reader.ReadAsync())
         {
-            result.Add(new ReviewWithBookInfoDTO
+            var reviewId = reader.GetInt32(idOrd);
+
+            if (!reviewDict.TryGetValue(reviewId, out var review))
             {
-                Id = reader.GetInt32(idOrd),
-                BookId = reader.GetInt32(bookIdOrd),
-                Score = reader.GetInt32(scoreOrd),
-                BookInfo = new BookDTO
+                review = new ReviewWithBookInfoDTO
                 {
-                    Id = reader.GetInt32(bookIdOrd),
-                    Title = reader.GetString(titleOrd),
-                    PublicationYear = reader.GetInt32(yearOrd)
-                }
-            });
+                    Id = reviewId,
+                    BookId = reader.GetInt32(bookIdOrd),
+                    Score = reader.GetInt32(scoreOrd),
+                    BookInfo = new BookWithAuthorsDTO
+                    {
+                        Id = reader.GetInt32(bookIdOrd),
+                        Title = reader.GetString(titleOrd),
+                        PublicationYear = reader.GetInt32(yearOrd),
+                        Authors = []
+                    }
+                };
+
+                reviewDict[reviewId] = review;
+                result.Add(review);
+            }
+
+            var author = new AuthorDTO
+            {
+                Id = reader.GetInt32(authorIdOrd),
+                Name = reader.GetString(nameOrd),
+                Surname = reader.GetString(surnameOrd)
+            };
+
+            review.BookInfo.Authors.Add(author);
         }
 
         return result;
