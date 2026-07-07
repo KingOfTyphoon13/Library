@@ -8,7 +8,10 @@ public static class AddConfigurationsWebApplicationBuilderExtension
     {
         var configuration = builder.Configuration;
 
-        builder.Host.UseSerilog();
+        builder.Host.UseSerilog((context, loggerConfiguration) =>
+        {
+            loggerConfiguration.ReadFrom.Configuration(context.Configuration);
+        });
 
         return builder;
     }
