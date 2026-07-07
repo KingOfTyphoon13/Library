@@ -8,8 +8,6 @@ public interface IAuthorsRepository
 
     Task<List<AuthorWithBooksCountDTO>> GetAllWithBookCountAsync();
 
-    Task<AuthorDTO?> GetByIdAsync(int id);
-
     Task<int> AddAsync(AuthorDTO dto);
 
     Task<bool> ExistsAsync(int id);
