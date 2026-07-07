@@ -4,5 +4,5 @@ namespace Library.Domain.DTOs.Reviews;
 
 public class ReviewWithBookInfoDTO : ReviewDTO
 {
-    public BookDTO BookInfo { get; set; } = new();
+    public BookWithAuthorsDTO BookInfo { get; set; } = new();
 }
