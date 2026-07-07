@@ -11,9 +11,34 @@ internal class BooksRepository : BaseRepository, IBooksRepository
     {
     }
 
-    public Task<int> AddAsync(CreateBookDTO dto)
+    public async Task<int> AddAsync(CreateBookDTO dto)
     {
-        throw new NotImplementedException();
+        const string insertBook = @"
+            INSERT INTO books (title, publication_year)
+            OUTPUT Inserted.id
+            VALUES (@Title, @Year)";
+
+        int bookId;
+        await using (var cmd = new SqlCommand(insertBook, _connection, _transaction()))
+        {
+            cmd.Parameters.Add(new SqlParameter("@Title", dto.Title));
+            cmd.Parameters.Add(new SqlParameter("@Year", dto.PublicationYear));
+            bookId = (int)await cmd.ExecuteScalarAsync();
+        }
+
+        const string insertLink = @"
+            INSERT INTO bookauthors (book_id, author_id)
+            VALUES (@BookId, @AuthorId)";
+
+        foreach (var author in dto.Authors)
+        {
+            await using var cmd = new SqlCommand(insertLink, _connection, _transaction());
+            cmd.Parameters.Add(new SqlParameter("@BookId", bookId));
+            cmd.Parameters.Add(new SqlParameter("@AuthorId", author.Id));
+            await cmd.ExecuteNonQueryAsync();
+        }
+
+        return bookId;
     }
 
     public async Task<List<BookWithAuthorsDTO>> GetBooksAsync()
@@ -93,12 +118,48 @@ internal class BooksRepository : BaseRepository, IBooksRepository
         };
     }
 
-    public Task<List<BookReviewStatsDTO>> GetByMinReviewCountAsync(int? minReviews)
+    public async Task<List<BookReviewStatsDTO>> GetByMinReviewCountAsync(int? minReviews)
     {
-        throw new NotImplementedException();
+        const string query = "SELECT " +
+            "                   b.id, b.title, b.publication_year, " +
+            "                   Count(r.id) as review_count, Round(AVG(Cast(r.score as float)), 2) AS average_score " +
+            "                 From books b" +
+            "                 Join reviews r ON r.book_id = b.id " +
+            "                 group by b.id, b.title, b.publication_year " +
+            "                  having (@MinReviews IS NULL OR Count(r.id)  >= @MinReviews) " +
+            "                 Order by b.id;";
+
+
+        var books = new List<BookReviewStatsDTO>();
+
+        await _openDbConnectionAsync();
+
+        await using var command = new SqlCommand(query, _connection, _transaction());
+        command.Parameters.Add(new SqlParameter("@MinReviews", minReviews is null ? DBNull.Value : minReviews));
+        await using var reader = await command.ExecuteReaderAsync();
+
+        var idOrd = reader.GetOrdinal("id");
+        var titleOrd = reader.GetOrdinal("title");
+        var yearOrd = reader.GetOrdinal("publication_year");
+        var reviewCountOrd = reader.GetOrdinal("review_count");
+        var averageScoreOrd = reader.GetOrdinal("average_score");
+
+        while (await reader.ReadAsync())
+        {
+            books.Add(new BookReviewStatsDTO()
+            {
+                Id = reader.GetInt32(idOrd),
+                Title = reader.GetString(titleOrd),
+                PublicationYear = reader.GetInt32(yearOrd),
+                ReviewCount = reader.GetInt32(reviewCountOrd),
+                AverageScore = reader.GetDouble(averageScoreOrd)
+            });
+        }
+
+        return books;
     }
 
-    public async Task<List<BookWithAuthorsDTO>> GetByPublicationYearAsync(int year)
+    public async Task<List<BookWithAuthorsDTO>> GetByPublicationYearAsync(int? year)
     {
         const string query = "SELECT " +
             "                   b.id, b.title, b.publication_year," +
@@ -106,8 +167,9 @@ internal class BooksRepository : BaseRepository, IBooksRepository
             "                 From books b" +
             "                 Join bookauthors ba ON ba.book_id = b.id" +
             "                 Join authors a ON a.id = ba.author_id " +
-            "                 where b.publication_year = @PublicationYear" +
+            "                 where (@PublicationYear IS NULL OR b.publication_year = @PublicationYear)" +
             "                 Order by b.id";
+
 
 
         var books = new Dictionary<int, BookWithAuthorsDTO>();
@@ -115,7 +177,8 @@ internal class BooksRepository : BaseRepository, IBooksRepository
         await _openDbConnectionAsync();
 
         await using var command = new SqlCommand(query, _connection, _transaction());
-        command.Parameters.Add(new SqlParameter("PublicationYear", year));
+
+        command.Parameters.Add(new SqlParameter("@PublicationYear", year is null ? DBNull.Value : year));
         await using var reader = await command.ExecuteReaderAsync();
 
         var idOrd = reader.GetOrdinal("id");
