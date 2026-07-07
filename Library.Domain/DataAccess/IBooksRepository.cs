@@ -6,7 +6,7 @@ public interface IBooksRepository
 {
     Task<List<BookWithAuthorsDTO>> GetBooksAsync();
 
-    Task<List<BookWithAuthorsDTO>> GetByPublicationYearAsync(int? year);
+    Task<List<BookWithAuthorsDTO>> GetByPublicationYearAsync(int year);
 
     Task<List<BookReviewStatsDTO>> GetByMinReviewCountAsync(int? minReviews);
 

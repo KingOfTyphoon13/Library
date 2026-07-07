@@ -18,7 +18,7 @@ internal class ReviewsRepository : BaseRepository, IReviewsRepository
                b.title, b.publication_year
         FROM reviews r
         JOIN books b ON b.id = r.book_id
-        ORDER BY r.id;";
+        ORDER BY r.id";
 
         var result = new List<ReviewWithBookInfoDTO>();
 
@@ -52,8 +52,16 @@ internal class ReviewsRepository : BaseRepository, IReviewsRepository
         return result;
     }
 
-    public Task<int> AddAsync(ReviewDTO dto)
+    public async Task<int> AddAsync(ReviewDTO dto)
     {
-        throw new NotImplementedException();
+        const string query = "Insert Into reviews (book_id, score) " +
+                             "Output Inserted.Id " +
+                             "Values (@BookID, @Score) ";
+
+        var cmd = new SqlCommand(query, _connection, _transaction());
+        cmd.Parameters.Add(new SqlParameter("@BookID", dto.BookId));
+        cmd.Parameters.Add(new SqlParameter("@Score", dto.Score));
+
+        return (int)await cmd.ExecuteScalarAsync();
     }
 }

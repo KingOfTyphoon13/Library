@@ -27,14 +27,14 @@ internal class BooksRepository : BaseRepository, IBooksRepository
             "                 Order by b.id";
 
 
-        var result = new List<BookWithAuthorsDTO>();
+        var books = new Dictionary<int, BookWithAuthorsDTO>();
 
         await _openDbConnectionAsync();
 
         await using var command = new SqlCommand(query, _connection, _transaction());
         await using var reader = await command.ExecuteReaderAsync();
 
-        var id = reader.GetOrdinal("id");
+        var idOrd = reader.GetOrdinal("id");
         var titleOrd = reader.GetOrdinal("title");
         var yearOrd = reader.GetOrdinal("publication_year");
         var authorIdOrd = reader.GetOrdinal("author_id");
@@ -43,30 +43,54 @@ internal class BooksRepository : BaseRepository, IBooksRepository
 
         while (await reader.ReadAsync())
         {
-            var dto = new BookWithAuthorsDTO()
+            var bookId = reader.GetInt32(idOrd);
+
+            if (!books.TryGetValue(bookId, out var dto))
             {
-                Id = reader.GetInt32(id),
-                Title = reader.GetString(titleOrd),
-                PublicationYear = reader.GetInt32(yearOrd),
+                dto = new BookWithAuthorsDTO
+                {
+                    Id = bookId,
+                    Title = reader.GetString(titleOrd),
+                    PublicationYear = reader.GetInt32(yearOrd)
+                };
+                books[bookId] = dto;
+            }
 
-            };
-
-            dto.Authors.Add(new AuthorDTO()
+            dto.Authors.Add(new AuthorDTO
             {
                 Id = reader.GetInt32(authorIdOrd),
                 Name = reader.GetString(nameOrd),
-                Surname = reader.GetString(surnameOrd),
+                Surname = reader.GetString(surnameOrd)
             });
-
-            result.Add(dto);
         }
 
-        return result;
+        return books.Values.ToList();
     }
 
-    public Task<BookDTO?> GetByIdAsync(int id)
+    public async Task<BookDTO?> GetByIdAsync(int id)
     {
-        throw new NotImplementedException();
+        const string query = "SELECT " +
+            "                   b.id, b.title, b.publication_year " +
+            "                 From books b" +
+            "                 Where b.id = @ID";
+
+
+        await _openDbConnectionAsync();
+
+        await using var command = new SqlCommand(query, _connection, _transaction());
+        command.Parameters.Add(new SqlParameter("@ID", id));
+
+        await using var reader = await command.ExecuteReaderAsync();
+
+        if (!await reader.ReadAsync())
+            return null;
+
+        return new BookDTO
+        {
+            Id = reader.GetInt32(reader.GetOrdinal("id")),
+            Title = reader.GetString(reader.GetOrdinal("title")),
+            PublicationYear = reader.GetInt32(reader.GetOrdinal("publication_year"))
+        };
     }
 
     public Task<List<BookReviewStatsDTO>> GetByMinReviewCountAsync(int? minReviews)
@@ -74,8 +98,56 @@ internal class BooksRepository : BaseRepository, IBooksRepository
         throw new NotImplementedException();
     }
 
-    public Task<List<BookWithAuthorsDTO>> GetByPublicationYearAsync(int? year)
+    public async Task<List<BookWithAuthorsDTO>> GetByPublicationYearAsync(int year)
     {
-        throw new NotImplementedException();
+        const string query = "SELECT " +
+            "                   b.id, b.title, b.publication_year," +
+            "                   a.id AS \"author_id\", a.name, a.surname" +
+            "                 From books b" +
+            "                 Join bookauthors ba ON ba.book_id = b.id" +
+            "                 Join authors a ON a.id = ba.author_id " +
+            "                 where b.publication_year = @PublicationYear" +
+            "                 Order by b.id";
+
+
+        var books = new Dictionary<int, BookWithAuthorsDTO>();
+
+        await _openDbConnectionAsync();
+
+        await using var command = new SqlCommand(query, _connection, _transaction());
+        command.Parameters.Add(new SqlParameter("PublicationYear", year));
+        await using var reader = await command.ExecuteReaderAsync();
+
+        var idOrd = reader.GetOrdinal("id");
+        var titleOrd = reader.GetOrdinal("title");
+        var yearOrd = reader.GetOrdinal("publication_year");
+        var authorIdOrd = reader.GetOrdinal("author_id");
+        var nameOrd = reader.GetOrdinal("name");
+        var surnameOrd = reader.GetOrdinal("surname");
+
+        while (await reader.ReadAsync())
+        {
+            var bookId = reader.GetInt32(idOrd);
+
+            if (!books.TryGetValue(bookId, out var dto))
+            {
+                dto = new BookWithAuthorsDTO
+                {
+                    Id = bookId,
+                    Title = reader.GetString(titleOrd),
+                    PublicationYear = reader.GetInt32(yearOrd)
+                };
+                books[bookId] = dto;
+            }
+
+            dto.Authors.Add(new AuthorDTO
+            {
+                Id = reader.GetInt32(authorIdOrd),
+                Name = reader.GetString(nameOrd),
+                Surname = reader.GetString(surnameOrd)
+            });
+        }
+
+        return books.Values.ToList();
     }
 }
