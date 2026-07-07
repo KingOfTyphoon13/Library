@@ -19,8 +19,8 @@ public class ReviewService : BaseService, IReviewService
         return await _reviewRepository.GetReviewsAsync();
     }
 
-    public Task SaveReviewAsync(ReviewDTO review)
+    public async Task SaveReviewAsync(ReviewDTO review)
     {
-        throw new NotImplementedException();
+        var id = await _reviewRepository.AddAsync(review);
     }
 }

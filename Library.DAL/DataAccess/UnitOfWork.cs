@@ -27,7 +27,7 @@ public class UnitOfWork : IUnitOfWork
 
     public async Task ExecuteTransactionAsync(Func<Task> transaction)
     {
-        OpenConnectionAsync();
+        await OpenConnectionAsync();
 
         _transaction = (SqlTransaction)await _connection.BeginTransactionAsync();
 
