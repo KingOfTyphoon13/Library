@@ -30,15 +30,13 @@ public class BooksService : BaseService, IBooksService
 
     public async Task<List<BookWithAuthorsDTO>> GetBooksWithAuthorsAsync(int? publicationYear)
     {
-        var books = publicationYear is null
-            ? await _booksRepository.GetBooksAsync()
-            : await _booksRepository.GetByPublicationYearAsync((int)publicationYear);
+        var books = await _booksRepository.GetByPublicationYearAsync(publicationYear);
         return books;
     }
 
     public async Task<List<BookReviewStatsDTO>> GetBookWithMinReviewCountAsync(int? minReviewCount)
     {
-        var books = await _booksRepository.GetByMinReviewCountAsync((int)minReviewCount);
+        var books = await _booksRepository.GetByMinReviewCountAsync(minReviewCount);
         return books;
     }
     public async Task AddBook(CreateBookDTO newBook)
