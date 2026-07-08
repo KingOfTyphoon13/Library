@@ -13,5 +13,7 @@ public interface IAuthorsService
 
     Task<KeysetResult<AuthorWithBooksCountDTO>> GetAuthorWithBooksCountsAsync(KeysetRequest request);
 
+    Task<int> GetAuthorsNumberAsync();
+
     Task AddAuthorAsync(AuthorDTO newAuthor);
 }

@@ -146,7 +146,7 @@ internal class AuthorsRepository : BaseRepository, IAuthorsRepository
         return result;
     }
 
-    public async Task<int> GetTotalEntries()
+    public async Task<int> GetTotalEntriesAsync()
     {
         var query = AuthorQueryDirector.GetTotalCount();
 

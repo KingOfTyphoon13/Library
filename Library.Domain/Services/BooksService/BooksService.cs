@@ -1,4 +1,5 @@
-﻿using Library.Domain.DataAccess;
+﻿using Library.Domain.Common.Pagination;
+using Library.Domain.DataAccess;
 using Library.Domain.DTOs.Books;
 using Library.Domain.Services.AuthorsService;
 using Microsoft.Extensions.Logging;
@@ -23,23 +24,85 @@ public class BooksService : BaseService, IBooksService
         return await _booksRepository.GetByIdAsync(id);
     }
 
-    public async Task<List<BookWithAuthorsDTO>> GetBooksWithAuthorsAsync()
+    public async Task<PagedResult<BookWithAuthorsDTO>> GetBooksWithAuthorsAsync(PagedRequest request)
     {
-        return await _booksRepository.GetBooksAsync();
+        var totalItemsCount = await _booksRepository.GetTotalEntriesAsync();
+
+        if (totalItemsCount <= (request.PageNumber - 1) * request.PageSize)
+        {
+            return new PagedResult<BookWithAuthorsDTO>
+            {
+                Items = [],
+                TotalCount = totalItemsCount,
+                PageNumber = request.PageNumber,
+                PageSize = request.PageSize
+            };
+        }
+
+        var books = await _booksRepository.GetBooksAsync(request);
+
+        return new PagedResult<BookWithAuthorsDTO>
+        {
+            Items = books,
+            TotalCount = totalItemsCount,
+            PageNumber = request.PageNumber,
+            PageSize = request.PageSize
+        };
     }
 
-    public async Task<List<BookWithAuthorsDTO>> GetBooksWithAuthorsAsync(int? publicationYear)
+    public async Task<PagedResult<BookWithAuthorsDTO>> GetBooksWithAuthorsAsync(PagedRequest request, int? publicationYear)
     {
-        var books = await _booksRepository.GetByPublicationYearAsync(publicationYear);
-        return books;
+        var totalItemsCount = await _booksRepository.GetTotalEntriesByPublicationYear(publicationYear);
+
+        if (totalItemsCount <= (request.PageNumber - 1) * request.PageSize)
+        {
+            return new PagedResult<BookWithAuthorsDTO>
+            {
+                Items = [],
+                TotalCount = totalItemsCount,
+                PageNumber = request.PageNumber,
+                PageSize = request.PageSize
+            };
+        }
+
+        var books = await _booksRepository.GetByPublicationYearAsync(request, publicationYear);
+
+        return new PagedResult<BookWithAuthorsDTO>
+        {
+            Items = books,
+            TotalCount = totalItemsCount,
+            PageNumber = request.PageNumber,
+            PageSize = request.PageSize
+        };
     }
 
-    public async Task<List<BookReviewStatsDTO>> GetBookWithMinReviewCountAsync(int? minReviewCount)
+    public async Task<PagedResult<BookReviewStatsDTO>> GetBookWithMinReviewCountAsync(PagedRequest request, int? minReviewCount)
     {
-        var books = await _booksRepository.GetByMinReviewCountAsync(minReviewCount);
-        return books;
+        var totalItemsCount = await _booksRepository.GetTotalEntriesByMinReviewCount(minReviewCount);
+
+        if (totalItemsCount <= (request.PageNumber - 1) * request.PageSize)
+        {
+            return new PagedResult<BookReviewStatsDTO>
+            {
+                Items = [],
+                TotalCount = totalItemsCount,
+                PageNumber = request.PageNumber,
+                PageSize = request.PageSize
+            };
+        }
+
+        var books = await _booksRepository.GetByMinReviewCountAsync(request, minReviewCount);
+
+        return new PagedResult<BookReviewStatsDTO>
+        {
+            Items = books,
+            TotalCount = totalItemsCount,
+            PageNumber = request.PageNumber,
+            PageSize = request.PageSize
+        };
     }
-    public async Task AddBook(CreateBookDTO newBook)
+
+    public async Task AddBookAsync(CreateBookDTO newBook)
     {
         if (newBook.Authors.Count > 5)
             throw new ValidationException("Max 5 authors per book.");
@@ -53,4 +116,6 @@ public class BooksService : BaseService, IBooksService
         });
 
     }
+
+    public async Task<int> GetBooksNumberAsync() => await _booksRepository.GetTotalEntriesAsync();
 }

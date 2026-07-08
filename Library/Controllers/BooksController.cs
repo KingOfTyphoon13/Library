@@ -5,6 +5,7 @@ using Library.Domain.Services.AuthorsService;
 using Library.Domain.Services.BooksService;
 using Library.ViewModels.Authors;
 using Library.ViewModels.Books;
+using Library.ViewModels.Common.Pagination;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
 
@@ -15,38 +16,70 @@ public class BooksController : BaseController
     private readonly IBooksService _bookService;
     private readonly IAuthorsService _authorsService;
 
+    private const int DefaultPageSize = 10;
+
     public BooksController(IBooksService bookService, IAuthorsService authorsService, IMapper mapper, ILogger<BaseController> logger) : base(mapper, logger)
     {
         _bookService = bookService ?? throw new ArgumentNullException(nameof(bookService));
         _authorsService = authorsService ?? throw new ArgumentNullException(nameof(authorsService));
     }
 
-    public async Task<IActionResult> Index(int? publicationYear)
+    public async Task<IActionResult> Index(int? publicationYear, int pageNumber = 1, int pageSize = DefaultPageSize)
     {
-        var books = (await _bookService.GetBooksWithAuthorsAsync(publicationYear))
-                        .Select(_mapper.Map<BookSummaryViewModel>)
-                        .ToList();
+        var result = await _bookService.GetBooksWithAuthorsAsync(
+            new PagedRequest { PageNumber = pageNumber, PageSize = pageSize },
+            publicationYear);
 
         var model = new BooksByYearViewModel
         {
             PublicationYear = publicationYear,
-            Results = books
+            Paginated = new PaginatedViewModel<BookSummaryViewModel>
+            {
+                Items = result.Items.Select(_mapper.Map<BookSummaryViewModel>).ToList(),
+                Pagination = new PaginationViewModel
+                {
+                    PageNumber = result.PageNumber,
+                    TotalPages = result.TotalPages,
+                    PageSize = result.PageSize,
+                    ActionName = nameof(Index),
+                    ControllerName = "Books",
+                    ContainerId = "booksContainer"
+                }
+            }
         };
+
+        if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            return PartialView("_BooksPaginatedContent", model.Paginated);
 
         return View(model);
     }
 
-    public async Task<IActionResult> ByMinReviews(int? minReviewCount)
+    public async Task<IActionResult> ByMinReviews(int? minReviewCount, int pageNumber = 1, int pageSize = DefaultPageSize)
     {
-        var books = (await _bookService.GetBookWithMinReviewCountAsync(minReviewCount))
-                        .Select(_mapper.Map<BookReviewStatsItemViewModel>)
-                        .ToList();
+        var result = await _bookService.GetBookWithMinReviewCountAsync(
+            new PagedRequest { PageNumber = pageNumber, PageSize = pageSize },
+            minReviewCount);
 
         var model = new BooksByMinReviewsViewModel
         {
             MinReviewCount = minReviewCount,
-            Results = books
+            Paginated = new PaginatedViewModel<BookReviewStatsItemViewModel>
+            {
+                Items = result.Items.Select(_mapper.Map<BookReviewStatsItemViewModel>).ToList(),
+                Pagination = new PaginationViewModel
+                {
+                    PageNumber = result.PageNumber,
+                    TotalPages = result.TotalPages,
+                    PageSize = result.PageSize,
+                    ActionName = nameof(ByMinReviews),
+                    ControllerName = "Books",
+                    ContainerId = "booksByMinReviewsContainer"
+                }
+            }
         };
+
+        if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            return PartialView("_BooksByMinReviewsPaginatedContent", model.Paginated);
 
         return View(model);
     }
@@ -54,12 +87,10 @@ public class BooksController : BaseController
     [HttpGet]
     public async Task<IActionResult> Create()
     {
-        var authors = await GetAuthorsAsync();
-
         var model = new BookCreateViewModel
         {
             Authors = [new AuthorSlotViewModel()],
-            AvailableAuthors = authors
+            AvailableAuthors = await GetAuthorsAsync()
         };
         return View(model);
     }
@@ -80,14 +111,12 @@ public class BooksController : BaseController
 
         try
         {
-            await _bookService.AddBook(dto);
+            await _bookService.AddBookAsync(dto);
         }
         catch (ValidationException ex)
         {
             ModelState.AddModelError(string.Empty, ex.Message);
-            model.AvailableAuthors = (await GetAuthorsAsync())
-                .Select(_mapper.Map<AuthorViewModel>)
-                .ToList();
+            model.AvailableAuthors = await GetAuthorsAsync();
             return View(model);
         }
 
@@ -96,11 +125,10 @@ public class BooksController : BaseController
 
     private async Task<List<AuthorViewModel>> GetAuthorsAsync()
     {
-        var result = await _authorsService.GetAuthorsAsync(new PagedRequest
-        {
-            PageNumber = 1,
-            PageSize = int.MaxValue
-        });
+        var authorsNumber = await _authorsService.GetAuthorsNumberAsync();
+
+        var result = await _authorsService.GetAuthorsAsync(
+            new PagedRequest { PageNumber = 1, PageSize = authorsNumber });
 
         return result.Items.Select(_mapper.Map<AuthorViewModel>).ToList();
     }

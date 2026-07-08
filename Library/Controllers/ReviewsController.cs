@@ -52,6 +52,7 @@ public class ReviewsController : BaseController
 
     public async Task<IActionResult> Create(int? bookId)
     {
+        var bookNumbers = await _bookService.GetBooksNumberAsync();
         var model = new ReviewCreateViewModel();
 
         if (bookId is not null)
@@ -62,7 +63,7 @@ public class ReviewsController : BaseController
         }
         else
         {
-            model.AvailableBooks = (await _bookService.GetBooksWithAuthorsAsync())
+            model.AvailableBooks = (await _bookService.GetBooksWithAuthorsAsync(new PagedRequest() { PageNumber = 1, PageSize = bookNumbers })).Items
                 .Select(_mapper.Map<BookSummaryViewModel>)
                 .ToList();
         }
@@ -75,12 +76,13 @@ public class ReviewsController : BaseController
     public async Task<IActionResult> Create(ReviewCreateViewModel model)
     {
         var book = await _bookService.GetBookByIdAsync(model.BookId);
+        var bookNumbers = await _bookService.GetBooksNumberAsync();
         model.Book = book is null ? null : _mapper.Map<BookSummaryViewModel>(book);
 
         if (!ModelState.IsValid || model.Book is null)
         {
             if (model.Book is null)
-                model.AvailableBooks = (await _bookService.GetBooksWithAuthorsAsync())
+                model.AvailableBooks = (await _bookService.GetBooksWithAuthorsAsync(new PagedRequest() { PageNumber = 1, PageSize = bookNumbers })).Items
                     .Select(_mapper.Map<BookSummaryViewModel>)
                     .ToList();
             return View(model);

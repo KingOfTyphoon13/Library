@@ -2,5 +2,5 @@
 
 public interface IRepository
 {
-    Task<int> GetTotalEntries();
+    Task<int> GetTotalEntriesAsync();
 }

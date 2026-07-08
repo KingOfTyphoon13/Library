@@ -8,6 +8,7 @@ public sealed class InsertQueryBuilder
     private readonly List<string> _columns = [];
     private string? _outputColumn;
     private readonly Dictionary<string, object> _parameters = [];
+    private readonly List<List<string>> _rows = [];
 
     public static InsertQueryBuilder Create() => new();
 
@@ -21,6 +22,27 @@ public sealed class InsertQueryBuilder
     {
         _columns.Add(column);
         _parameters[paramName] = value ?? DBNull.Value;
+        return this;
+    }
+
+    public InsertQueryBuilder AddRow(params (string Column, object? Value)[] values)
+    {
+        if (_columns.Count == 0)
+        {
+            _columns.AddRange(values.Select(v => v.Column));
+        }
+
+        var rowParamNames = new List<string>();
+        var rowIndex = _rows.Count;
+
+        foreach (var (column, value) in values)
+        {
+            var paramName = $"@{column}_{rowIndex}";
+            _parameters[paramName] = value ?? DBNull.Value;
+            rowParamNames.Add(paramName);
+        }
+
+        _rows.Add(rowParamNames);
         return this;
     }
 
@@ -40,8 +62,15 @@ public sealed class InsertQueryBuilder
             sb.Append($"OUTPUT Inserted.{_outputColumn}\n");
         }
 
-        var paramNames = _parameters.Keys;
-        sb.Append($"VALUES ({string.Join(", ", paramNames)});");
+        if (_rows.Count > 0)
+        {
+            var valueRows = _rows.Select(row => $"({string.Join(", ", row)})");
+            sb.Append($"VALUES {string.Join(", ", valueRows)};");
+        }
+        else
+        {
+            sb.Append($"VALUES ({string.Join(", ", _parameters.Keys)});");
+        }
 
         return new BuiltQuery(sb.ToString(), _parameters);
     }

@@ -22,18 +22,20 @@
     }
 </form>
 
-@if (!Model.Results.Any())
+<partial name="_PageSizeSelector" model="Model.Paginated.Pagination" />
+@if (!Model.Paginated.Items.Any())
 {
     <p class="text-muted text-center">No books found.</p>
 }
 else
 {
-    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
-        @foreach (var book in Model.Results)
-        {
-            <div class="col">
-                <partial name="_BookInfoCard" model="book" />
+   
+
+    <div id="@Model.Paginated.Pagination.ContainerId">
+        @(await Html.RenderPaginatedListAsync(Model.Paginated, @<text>
+            <div class="book-context-target" data-book-id="@item.Id">
+                @await Html.PartialAsync("_BookInfoCard", item)
             </div>
-        }
+        </text>))
     </div>
 }

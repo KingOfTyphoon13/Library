@@ -11,6 +11,7 @@ public sealed class QueryBuilder
     private readonly List<string> _joins = [];
     private readonly List<string> _whereConditions = [];
     private readonly List<string> _groupByColumns = [];
+    private readonly List<string> _havingConditions = [];
     private string _orderBy = "";
     private string _paginationClause = "";
     private readonly Dictionary<string, object> _parameters = [];
@@ -66,6 +67,16 @@ public sealed class QueryBuilder
         return this;
     }
 
+    public QueryBuilder Having(string condition, string? paramName = null, object? paramValue = null)
+    {
+        _havingConditions.Add(condition);
+        if (paramName is not null)
+        {
+            _parameters[paramName] = paramValue ?? DBNull.Value;
+        }
+        return this;
+    }
+
     public QueryBuilder OrderBy(string column)
     {
         _orderBy = column;
@@ -117,6 +128,11 @@ public sealed class QueryBuilder
         if (_groupByColumns.Count > 0)
         {
             sb.Append($"GROUP BY {string.Join(", ", _groupByColumns)}\n");
+        }
+
+        if (_havingConditions.Count > 0)
+        {
+            sb.Append($"HAVING {string.Join(" AND ", _havingConditions)}\n");
         }
 
         if (!string.IsNullOrEmpty(_orderBy))
