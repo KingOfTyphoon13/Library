@@ -1,11 +1,9 @@
 ﻿using AutoMapper;
-using Library.Domain.DTOs.Books;
 using Library.Domain.Services.AuthorsService;
 using Library.Domain.Services.BooksService;
 using Library.ViewModels.Authors;
 using Library.ViewModels.Books;
 using Microsoft.AspNetCore.Mvc;
-using System.ComponentModel.DataAnnotations;
 
 namespace Library.Controllers;
 
@@ -53,49 +51,51 @@ public class BooksController : BaseController
     [HttpGet]
     public async Task<IActionResult> Create()
     {
-        var authors = await GetAuthors();
+        throw new NotImplementedException();
+        //var authors = await GetAuthors();
 
-        var model = new BookCreateViewModel
-        {
-            Authors = [new AuthorSlotViewModel()],
-            AvailableAuthors = authors
-        };
-        return View(model);
+        //var model = new BookCreateViewModel
+        //{
+        //    Authors = [new AuthorSlotViewModel()],
+        //    AvailableAuthors = authors
+        //};
+        //return View(model);
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(BookCreateViewModel model)
     {
-        NormalizeAuthorSlots(model);
+        throw new NotImplementedException();
+        //NormalizeAuthorSlots(model);
 
-        if (!ModelState.IsValid)
-        {
-            model.AvailableAuthors = await GetAuthors();
-            return View(model);
-        }
+        //if (!ModelState.IsValid)
+        //{
+        //    model.AvailableAuthors = await GetAuthors();
+        //    return View(model);
+        //}
 
-        var dto = _mapper.Map<CreateBookDTO>(model);
+        //var dto = _mapper.Map<CreateBookDTO>(model);
 
-        try
-        {
-            await _bookService.AddBook(dto);
-        }
-        catch (ValidationException ex)
-        {
-            ModelState.AddModelError(string.Empty, ex.Message);
-            model.AvailableAuthors = (await _authorsService.GetAuthorsAsync())
-                .Select(_mapper.Map<AuthorViewModel>)
-                .ToList();
-            return View(model);
-        }
+        //try
+        //{
+        //    await _bookService.AddBook(dto);
+        //}
+        //catch (ValidationException ex)
+        //{
+        //    ModelState.AddModelError(string.Empty, ex.Message);
+        //    model.AvailableAuthors = (await _authorsService.GetAuthorsAsync())
+        //        .Select(_mapper.Map<AuthorViewModel>)
+        //        .ToList();
+        //    return View(model);
+        //}
 
-        return RedirectToAction(nameof(Index));
+        //return RedirectToAction(nameof(Index));
     }
 
-    private async Task<List<AuthorViewModel>> GetAuthors() => (await _authorsService.GetAuthorsAsync())
-                .Select(_mapper.Map<AuthorViewModel>)
-                .ToList();
+    //private async Task<List<AuthorViewModel>> GetAuthors() => (await _authorsService.GetAuthorsAsync())
+    //            .Select(_mapper.Map<AuthorViewModel>)
+    //            .ToList();
 
     private void NormalizeAuthorSlots(BookCreateViewModel model)
     {

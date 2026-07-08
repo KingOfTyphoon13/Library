@@ -79,6 +79,17 @@ internal class ReviewsRepository : BaseRepository, IReviewsRepository
         return result;
     }
 
+    public async Task<int> GetTotalEntries()
+    {
+        const string query = "Select Count(*) from reviews";
+
+        await _openDbConnectionAsync();
+
+        await using var command = new SqlCommand(query, _connection, _transaction());
+
+        return (int)await command.ExecuteScalarAsync();
+    }
+
     public async Task<int> AddAsync(ReviewDTO dto)
     {
         const string query = "Insert Into reviews (book_id, score) " +

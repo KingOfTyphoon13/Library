@@ -2,7 +2,7 @@
 
 namespace Library.Domain.DataAccess;
 
-public interface IBooksRepository
+public interface IBooksRepository : IRepository
 {
     Task<List<BookWithAuthorsDTO>> GetBooksAsync();
 
