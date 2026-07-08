@@ -7,5 +7,5 @@ public interface IReviewService
 {
     Task<PagedResult<ReviewWithBookInfoDTO>> GetReviewsAsync(PagedRequest request);
 
-    Task SaveReviewAsync(ReviewDTO review);
+    Task<int> SaveReviewAsync(ReviewDTO review);
 }
