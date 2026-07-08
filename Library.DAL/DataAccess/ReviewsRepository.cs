@@ -70,7 +70,7 @@ internal class ReviewsRepository : BaseRepository, IReviewsRepository
         return result;
     }
 
-    public async Task<int> GetTotalEntries()
+    public async Task<int> GetTotalEntriesAsync()
     {
         var query = ReviewQueryDirector.GetTotalCount();
 

@@ -1,4 +1,6 @@
-﻿namespace Library.ViewModels.Books;
+﻿using Library.ViewModels.Common.Pagination;
+
+namespace Library.ViewModels.Books;
 
 public class BookReviewStatsItemViewModel : BookBaseViewModel
 {
@@ -9,6 +11,5 @@ public class BookReviewStatsItemViewModel : BookBaseViewModel
 public class BooksByMinReviewsViewModel
 {
     public int? MinReviewCount { get; set; }
-
-    public List<BookReviewStatsItemViewModel> Results { get; set; } = [];
+    public PaginatedViewModel<BookReviewStatsItemViewModel> Paginated { get; set; }
 }

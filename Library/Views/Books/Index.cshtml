@@ -1,6 +1,12 @@
 ﻿@model BooksByYearViewModel
+@{
+    ViewData["Title"] = "Books";
+}
 
-<h1 class="fw-bold mb-5 text-[2rem] text-center">Books</h1>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="fw-bold text-[2rem]">Books</h1>
+    @await Html.PartialAsync("_PageSizeSelector", Model.Paginated.Pagination)
+</div>
 
 <form method="get" asp-action="Index" class="mb-4 d-flex align-items-end gap-2">
     <div>
@@ -15,13 +21,12 @@
     }
 </form>
 
-<div class="review-grid">
-    @foreach (var book in Model.Results)
-    {
-        <div class="review-card book-context-target" data-book-id="@book.Id">
-            @await Html.PartialAsync("_BookInfoCard", book)
+<div id="@Model.Paginated.Pagination.ContainerId">
+    @(await Html.RenderPaginatedListAsync(Model.Paginated, @<text>
+        <div class="book-context-target" data-book-id="@item.Id">
+            @await Html.PartialAsync("_BookInfoCard", item)
         </div>
-    }
+    </text>))
 </div>
 
 <div id="bookContextMenu" class="book-context-menu" style="display:none;">
@@ -29,33 +34,34 @@
 </div>
 
 <a asp-action="Create" class="btn btn-primary mt-4">Add Book</a>
-
 <a asp-action="ByMinReviews" class="btn btn-secondary mt-4">Show books with reviews count</a>
+
 @section Scripts {
+    <script src="~/js/soft-pagination.js"></script>
     <script>
         (function () {
-            const menu = document.getElementById('bookContextMenu');
-            const writeReviewLink = document.getElementById('bookContextWriteReview');
-            let activeBookId = null;
+        const menu = document.getElementById('bookContextMenu');
+        const writeReviewLink = document.getElementById('bookContextWriteReview');
+        let activeBookId = null;
 
-            document.querySelectorAll('.book-context-target').forEach(card => {
-                card.addEventListener('contextmenu', e => {
-                    e.preventDefault();
-                    activeBookId = card.dataset.bookId;
-                    menu.style.left = e.pageX + 'px';
-                    menu.style.top = e.pageY + 'px';
-                    menu.style.display = 'block';
-                });
-            });
+        document.addEventListener('contextmenu', e => {
+        const card = e.target.closest('.book-context-target');
+        if (!card) return;
+        e.preventDefault();
+        activeBookId = card.dataset.bookId;
+        menu.style.left = e.pageX + 'px';
+        menu.style.top = e.pageY + 'px';
+        menu.style.display = 'block';
+        });
 
-            writeReviewLink.addEventListener('click', e => {
-                e.preventDefault();
-                if (activeBookId) {
-                    window.location.href = '@Url.Action("Create", "Reviews")?bookId=' + activeBookId;
-                }
-            });
+        writeReviewLink.addEventListener('click', e => {
+        e.preventDefault();
+        if (activeBookId) {
+        window.location.href = '@Url.Action("Create", "Reviews")?bookId=' + activeBookId;
+        }
+        });
 
-            document.addEventListener('click', () => { menu.style.display = 'none'; });
+        document.addEventListener('click', () => { menu.style.display = 'none'; });
         })();
     </script>
 }

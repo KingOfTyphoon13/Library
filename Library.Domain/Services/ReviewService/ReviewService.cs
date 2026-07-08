@@ -16,7 +16,7 @@ public class ReviewService : BaseService, IReviewService
 
     public async Task<PagedResult<ReviewWithBookInfoDTO>> GetReviewsAsync(PagedRequest request)
     {
-        var totalItemsCount = await _reviewRepository.GetTotalEntries();
+        var totalItemsCount = await _reviewRepository.GetTotalEntriesAsync();
 
         if (totalItemsCount <= (request.PageNumber - 1) * request.PageSize)
         {

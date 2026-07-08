@@ -16,7 +16,7 @@ public class AuthorsService : BaseService, IAuthorsService
 
     public async Task<PagedResult<AuthorDTO>> GetAuthorsAsync(PagedRequest request)
     {
-        var totalItemsCount = await _authorRepository.GetTotalEntries();
+        var totalItemsCount = await _authorRepository.GetTotalEntriesAsync();
 
         if (totalItemsCount <= (request.PageNumber - 1) * request.PageSize)
         {
@@ -66,7 +66,7 @@ public class AuthorsService : BaseService, IAuthorsService
 
     public async Task<PagedResult<AuthorWithBooksCountDTO>> GetAuthorWithBooksCountsAsync(PagedRequest request)
     {
-        var totalItemsCount = await _authorRepository.GetTotalEntries();
+        var totalItemsCount = await _authorRepository.GetTotalEntriesAsync();
 
         if (totalItemsCount <= (request.PageNumber - 1) * request.PageSize)
         {
@@ -88,14 +88,6 @@ public class AuthorsService : BaseService, IAuthorsService
             PageSize = request.PageSize,
             PageNumber = request.PageNumber
         };
-    }
-
-    public async Task AddAuthorAsync(AuthorDTO newAuthor)
-    {
-        if (string.IsNullOrWhiteSpace(newAuthor.Name) && string.IsNullOrWhiteSpace(newAuthor.Surname))
-            throw new ArgumentException("Either Name or Surname must be provided.", nameof(newAuthor));
-
-        await _authorRepository.AddAsync(newAuthor);
     }
 
     public async Task<KeysetResult<AuthorWithBooksCountDTO>> GetAuthorWithBooksCountsAsync(KeysetRequest request)
@@ -120,5 +112,15 @@ public class AuthorsService : BaseService, IAuthorsService
             PageSize = request.PageSize,
             HasNextPage = hasNextPage
         };
+    }
+
+    public async Task<int> GetAuthorsNumberAsync() => await _authorRepository.GetTotalEntriesAsync();
+
+    public async Task AddAuthorAsync(AuthorDTO newAuthor)
+    {
+        if (string.IsNullOrWhiteSpace(newAuthor.Name) && string.IsNullOrWhiteSpace(newAuthor.Surname))
+            throw new ArgumentException("Either Name or Surname must be provided.", nameof(newAuthor));
+
+        await _authorRepository.AddAsync(newAuthor);
     }
 }
