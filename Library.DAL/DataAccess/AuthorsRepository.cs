@@ -1,4 +1,5 @@
-﻿using Library.Domain.Common.Pagination;
+﻿using Library.DAL.QueryBuilder.Directors;
+using Library.Domain.Common.Pagination;
 using Library.Domain.DataAccess;
 using Library.Domain.DTOs.Authors;
 using Microsoft.Data.SqlClient;
@@ -13,58 +14,41 @@ internal class AuthorsRepository : BaseRepository, IAuthorsRepository
 
     public async Task<int> AddAsync(AuthorDTO dto)
     {
-        const string query = @"
-        Insert into authors (name, surname) 
-        Output Inserted.id
-        Values(@Name, @Surname)";
+        var query = AuthorQueryDirector.Insert(dto);
 
-        var cmd = new SqlCommand(query, _connection, _transaction());
-        cmd.Parameters.Add(new SqlParameter("@Name", dto.Name));
-        cmd.Parameters.Add(new SqlParameter("@Surname", dto.Surname));
+        await _openDbConnectionAsync();
 
-        return (int)await cmd.ExecuteScalarAsync();
+        await using var command = query.ToCommand(_connection, _transaction());
+
+        return (int)await command.ExecuteScalarAsync();
     }
 
     public async Task<bool> ExistsAsync(int id)
     {
-        const string sql = "SELECT 1 FROM authors WHERE id = @Id";
+        var query = AuthorQueryDirector.ExistsById(id);
 
         await _openDbConnectionAsync();
 
-        await using var command = new SqlCommand(sql, _connection, _transaction());
-        command.Parameters.Add(new SqlParameter("@Id", id));
-
+        await using var command = query.ToCommand(_connection, _transaction());
         var result = await command.ExecuteScalarAsync();
         return result is not null;
     }
 
     public async Task<List<AuthorWithBooksCountDTO>> GetAllWithBookCountAsync(KeysetRequest request)
     {
-        const string query = @"
-        SELECT (Top @PageSize)
-               a.id, a.name, a.surname,
-               Count(b.id) as books_count
-        FROM authors a
-        LEFT JOIN bookauthors ba ON ba.author_id = a.id
-        LEFT JOIN books b ON b.id = ba.book_id
-        WHERE (@LastItemId IS NULL OR a.id > @LastItemId)
-        GROUP BY a.id, a.name, a.surname
-        ORDER BY a.id";
-
-        var result = new List<AuthorWithBooksCountDTO>();
+        var query = AuthorQueryDirector.GetKeysetWithBookCount(request);
 
         await _openDbConnectionAsync();
 
-        await using var command = new SqlCommand(query, _connection, _transaction());
-        command.Parameters.Add(new SqlParameter("@PageSize", request.PageSize));
-        command.Parameters.Add(new SqlParameter("@LastItemId", request.LastItemIndex));
+        await using var command = query.ToCommand(_connection, _transaction());
         await using var reader = await command.ExecuteReaderAsync();
 
-        var idOrd = reader.GetOrdinal("id");
-        var nameOrd = reader.GetOrdinal("name");
-        var surnameOrd = reader.GetOrdinal("surname");
-        var countOrd = reader.GetOrdinal("books_count");
+        var idOrd = reader.GetOrdinal(AuthorQueryDirector.Columns.Id);
+        var nameOrd = reader.GetOrdinal(AuthorQueryDirector.Columns.Name);
+        var surnameOrd = reader.GetOrdinal(AuthorQueryDirector.Columns.Surname);
+        var countOrd = reader.GetOrdinal(AuthorQueryDirector.Columns.BooksCount);
 
+        var result = new List<AuthorWithBooksCountDTO>();
         while (await reader.ReadAsync())
         {
             result.Add(new AuthorWithBooksCountDTO
@@ -81,31 +65,19 @@ internal class AuthorsRepository : BaseRepository, IAuthorsRepository
 
     public async Task<List<AuthorWithBooksCountDTO>> GetAllWithBookCountAsync(PagedRequest request)
     {
-        const string query = @"
-        SELECT a.id, a.name, a.surname,
-               COUNT(b.id) AS books_count
-        FROM authors a
-        LEFT JOIN bookauthors ba ON ba.author_id = a.id
-        LEFT JOIN books b ON b.id = ba.book_id
-        GROUP BY a.id, a.name, a.surname
-        ORDER BY a.id
-        OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY;";
-
-        var result = new List<AuthorWithBooksCountDTO>();
+        var query = AuthorQueryDirector.GetPagedWithBookCount(request);
 
         await _openDbConnectionAsync();
 
-        await using var command = new SqlCommand(query, _connection, _transaction());
-        command.Parameters.Add(new SqlParameter("@Offset", (request.PageNumber - 1) * request.PageSize));
-        command.Parameters.Add(new SqlParameter("@PageSize", request.PageSize));
-
+        await using var command = query.ToCommand(_connection, _transaction());
         await using var reader = await command.ExecuteReaderAsync();
 
-        var idOrd = reader.GetOrdinal("id");
-        var nameOrd = reader.GetOrdinal("name");
-        var surnameOrd = reader.GetOrdinal("surname");
-        var countOrd = reader.GetOrdinal("books_count");
+        var idOrd = reader.GetOrdinal(AuthorQueryDirector.Columns.Id);
+        var nameOrd = reader.GetOrdinal(AuthorQueryDirector.Columns.Name);
+        var surnameOrd = reader.GetOrdinal(AuthorQueryDirector.Columns.Surname);
+        var countOrd = reader.GetOrdinal(AuthorQueryDirector.Columns.BooksCount);
 
+        var result = new List<AuthorWithBooksCountDTO>();
         while (await reader.ReadAsync())
         {
             result.Add(new AuthorWithBooksCountDTO
@@ -119,27 +91,21 @@ internal class AuthorsRepository : BaseRepository, IAuthorsRepository
 
         return result;
     }
+
     public async Task<List<AuthorDTO>> GetAuthors(KeysetRequest request)
     {
-        const string sql = @"
-        SELECT TOP (@PageSize) a.id, a.name, a.surname
-        FROM authors a
-        WHERE (@LastItemId IS NULL OR a.id > @LastItemId)
-        ORDER BY a.id;";
-
-        var result = new List<AuthorDTO>();
+        var query = AuthorQueryDirector.GetKeyset(request);
 
         await _openDbConnectionAsync();
 
-        await using var command = new SqlCommand(sql, _connection, _transaction());
-        command.Parameters.Add(new SqlParameter("@PageSize", request.PageSize));
-        command.Parameters.Add(new SqlParameter("@LastItemId", (object?)request.LastItemIndex ?? DBNull.Value));
+        await using var command = query.ToCommand(_connection, _transaction());
         await using var reader = await command.ExecuteReaderAsync();
 
-        var idOrd = reader.GetOrdinal("id");
-        var nameOrd = reader.GetOrdinal("name");
-        var surnameOrd = reader.GetOrdinal("surname");
+        var idOrd = reader.GetOrdinal(AuthorQueryDirector.Columns.Id);
+        var nameOrd = reader.GetOrdinal(AuthorQueryDirector.Columns.Name);
+        var surnameOrd = reader.GetOrdinal(AuthorQueryDirector.Columns.Surname);
 
+        var result = new List<AuthorDTO>();
         while (await reader.ReadAsync())
         {
             result.Add(new AuthorDTO
@@ -155,25 +121,18 @@ internal class AuthorsRepository : BaseRepository, IAuthorsRepository
 
     public async Task<List<AuthorDTO>> GetAuthors(PagedRequest request)
     {
-        const string sql = @"
-        SELECT a.id, a.name, a.surname
-        FROM authors a
-        ORDER BY a.id
-        OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY;";
-
-        var result = new List<AuthorDTO>();
+        var query = AuthorQueryDirector.GetPaged(request);
 
         await _openDbConnectionAsync();
 
-        await using var command = new SqlCommand(sql, _connection, _transaction());
-        command.Parameters.Add(new SqlParameter("@Offset", (request.PageNumber - 1) * request.PageSize));
-        command.Parameters.Add(new SqlParameter("@PageSize", request.PageSize));
+        await using var command = query.ToCommand(_connection, _transaction());
         await using var reader = await command.ExecuteReaderAsync();
 
-        var idOrd = reader.GetOrdinal("id");
-        var nameOrd = reader.GetOrdinal("name");
-        var surnameOrd = reader.GetOrdinal("surname");
+        var idOrd = reader.GetOrdinal(AuthorQueryDirector.Columns.Id);
+        var nameOrd = reader.GetOrdinal(AuthorQueryDirector.Columns.Name);
+        var surnameOrd = reader.GetOrdinal(AuthorQueryDirector.Columns.Surname);
 
+        var result = new List<AuthorDTO>();
         while (await reader.ReadAsync())
         {
             result.Add(new AuthorDTO
@@ -189,12 +148,11 @@ internal class AuthorsRepository : BaseRepository, IAuthorsRepository
 
     public async Task<int> GetTotalEntries()
     {
-        const string query = "Select Count(a.id) from authors a";
+        var query = AuthorQueryDirector.GetTotalCount();
 
         await _openDbConnectionAsync();
 
-        await using var command = new SqlCommand(query, _connection, _transaction());
-
+        await using var command = query.ToCommand(_connection, _transaction());
         return (int)await command.ExecuteScalarAsync();
     }
 }
