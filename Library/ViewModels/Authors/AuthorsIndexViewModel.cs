@@ -1,9 +1,8 @@
-﻿using Library.ViewModels.Common;
+﻿using Library.ViewModels.Common.Pagination;
 
 namespace Library.ViewModels.Authors;
 
 public class AuthorsIndexViewModel
 {
-    public List<AuthorListItemViewModel> Authors { get; set; } = [];
-    public PaginationViewModel Pagination { get; set; } = new();
+    public PaginatedViewModel<AuthorListItemViewModel> AuthorsListViewModel { get; set; }
 }

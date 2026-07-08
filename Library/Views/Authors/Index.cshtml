@@ -1,12 +1,13 @@
 ﻿@model AuthorsIndexViewModel
 
-<h1 class="fw-bold mb-5 text-[2rem] text-center"> Authors</h1>
+<h1 class="fw-bold mb-5 text-[2rem] text-center">Authors</h1>
 
-<div class="review-grid">
-    @foreach (var author in Model.Authors)
-    {
-        <div class="review-card">
-            @await Html.PartialAsync("_AuthorInfoCard", author)
-        </div>
-    }
+<div id="paged-content">
+    @(await Html.RenderPaginatedListAsync(Model.AuthorsListViewModel, @<text>
+        @await Html.PartialAsync("_AuthorInfoCard", item)
+    </text>))
 </div>
+
+@section Scripts {
+    <script src="~/js/soft-pagination.js"></script>
+}
