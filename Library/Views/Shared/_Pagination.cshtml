@@ -1,0 +1,33 @@
+﻿@model PaginationViewModel
+
+<nav class="pagination" data-container="@Model.ContainerId">
+    <a class="page-link first @(Model.PageNumber == 1 ? "disabled" : "")"
+       asp-action="@Model.ActionName" asp-controller="@Model.ControllerName" asp-route-pageNumber="@(Model.PageNumber - 1)">
+        Previous
+    </a>
+
+    @if (Model.TotalPages > 5 && Model.PageNumber > 3)
+    {
+        <a class="page-link" asp-action="@Model.ActionName" asp-controller="@Model.ControllerName" asp-route-pageNumber="1">1</a>
+        <span class="page-ellipsis">...</span>
+    }
+
+    @for (var i = Math.Max(1, Model.PageNumber - 1); i <= Math.Min(Model.TotalPages, Model.PageNumber + 1); i++)
+    {
+        <a class="page-link @(i == Model.PageNumber ? "active" : "")"
+           asp-action="@Model.ActionName" asp-controller="@Model.ControllerName" asp-route-pageNumber="@i">
+            @i
+        </a>
+    }
+
+    @if (Model.TotalPages > 5 && Model.PageNumber < Model.TotalPages - 2)
+    {
+        <span class="page-ellipsis">...</span>
+        <a class="page-link" asp-action="@Model.ActionName" asp-controller="@Model.ControllerName" asp-route-pageNumber="@Model.TotalPages">@Model.TotalPages</a>
+    }
+
+    <a class="page-link next @(Model.PageNumber == Model.TotalPages ? "disabled" : "")"
+       asp-action="@Model.ActionName" asp-controller="@Model.ControllerName" asp-route-pageNumber="@(Model.PageNumber + 1)">
+        Next
+    </a>
+</nav>
