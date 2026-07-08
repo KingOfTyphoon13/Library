@@ -1,6 +1,8 @@
-﻿namespace Library.ViewModels.Reviews;
+﻿using Library.ViewModels.Common.Pagination;
+
+namespace Library.ViewModels.Reviews;
 
 public class ReviewsIndexViewModel
 {
-    public List<ReviewListItemViewModel> RecentReviews { get; set; } = [];
+    public PaginatedViewModel<ReviewListItemViewModel> RecentReviews { get; set; }
 }

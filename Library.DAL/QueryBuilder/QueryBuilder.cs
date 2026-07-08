@@ -28,6 +28,15 @@ public sealed class QueryBuilder
         _from = table;
         return this;
     }
+    public QueryBuilder From(BuiltQuery subquery, string alias)
+    {
+        _from = $"({subquery.Sql}) AS {alias}";
+        foreach (var (key, value) in subquery.Parameters)
+        {
+            _parameters[key] = value;
+        }
+        return this;
+    }
 
     public QueryBuilder LeftJoin(string table, string onCondition)
     {

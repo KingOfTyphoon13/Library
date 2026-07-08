@@ -1,4 +1,5 @@
-﻿using Library.Domain.DataAccess;
+﻿using Library.Domain.Common.Pagination;
+using Library.Domain.DataAccess;
 using Library.Domain.DTOs.Reviews;
 using Microsoft.Extensions.Logging;
 
@@ -13,10 +14,30 @@ public class ReviewService : BaseService, IReviewService
         _reviewRepository = _unitOfWork.Reviews;
     }
 
-    public async Task<List<ReviewWithBookInfoDTO>> GetReviewsAsync()
+    public async Task<PagedResult<ReviewWithBookInfoDTO>> GetReviewsAsync(PagedRequest request)
     {
-        var reviews = await _reviewRepository.GetReviewsAsync();
-        return reviews;
+        var totalItemsCount = await _reviewRepository.GetTotalEntries();
+
+        if (totalItemsCount <= (request.PageNumber - 1) * request.PageSize)
+        {
+            return new PagedResult<ReviewWithBookInfoDTO>
+            {
+                Items = [],
+                TotalCount = totalItemsCount,
+                PageNumber = request.PageNumber,
+                PageSize = request.PageSize
+            };
+        }
+
+        var reviews = await _reviewRepository.GetReviewsAsync(request);
+
+        return new PagedResult<ReviewWithBookInfoDTO>
+        {
+            Items = reviews,
+            TotalCount = totalItemsCount,
+            PageNumber = request.PageNumber,
+            PageSize = request.PageSize
+        };
     }
 
     public async Task SaveReviewAsync(ReviewDTO review)

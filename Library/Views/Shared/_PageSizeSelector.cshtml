@@ -1,0 +1,15 @@
+﻿@model PaginationViewModel
+@{
+    var options = new[] { 10, 25, 50, 100 };
+}
+
+<div class="page-size-selector">
+    @foreach (var size in options)
+    {
+        <a class="page-size-link @(size == Model.PageSize ? "active" : "")"
+           asp-action="@Model.ActionName" asp-controller="@Model.ControllerName"
+           asp-route-pageNumber="1" asp-route-pageSize="@size">
+            @size Items
+        </a>
+    }
+</div>
