@@ -1,8 +1,9 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Library.Domain.Common.Pagination;
+using System.ComponentModel.DataAnnotations;
 
 namespace Library.ViewModels.Authors;
 
-public class AuthorViewModel : IValidatableObject
+public class AuthorViewModel : IValidatableObject, IIdentifiable
 {
     public int Id { get; set; }
 

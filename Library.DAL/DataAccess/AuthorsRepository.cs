@@ -1,4 +1,5 @@
-﻿using Library.Domain.DataAccess;
+﻿using Library.Domain.Common.Pagination;
+using Library.Domain.DataAccess;
 using Library.Domain.DTOs.Authors;
 using Microsoft.Data.SqlClient;
 
@@ -37,14 +38,16 @@ internal class AuthorsRepository : BaseRepository, IAuthorsRepository
         return result is not null;
     }
 
-    public async Task<List<AuthorWithBooksCountDTO>> GetAllWithBookCountAsync()
+    public async Task<List<AuthorWithBooksCountDTO>> GetAllWithBookCountAsync(KeysetRequest request)
     {
         const string query = @"
-        SELECT a.id, a.name, a.surname,
+        SELECT (Top @PageSize)
+               a.id, a.name, a.surname,
                Count(b.id) as books_count
         FROM authors a
         LEFT JOIN bookauthors ba ON ba.author_id = a.id
         LEFT JOIN books b ON b.id = ba.book_id
+        WHERE (@LastItemId IS NULL OR a.id > @LastItemId)
         GROUP BY a.id, a.name, a.surname
         ORDER BY a.id";
 
@@ -53,6 +56,8 @@ internal class AuthorsRepository : BaseRepository, IAuthorsRepository
         await _openDbConnectionAsync();
 
         await using var command = new SqlCommand(query, _connection, _transaction());
+        command.Parameters.Add(new SqlParameter("@PageSize", request.PageSize));
+        command.Parameters.Add(new SqlParameter("@LastItemId", request.LastItemIndex));
         await using var reader = await command.ExecuteReaderAsync();
 
         var idOrd = reader.GetOrdinal("id");
@@ -74,18 +79,61 @@ internal class AuthorsRepository : BaseRepository, IAuthorsRepository
         return result;
     }
 
-    public async Task<List<AuthorDTO>> GetAuthors()
+    public async Task<List<AuthorWithBooksCountDTO>> GetAllWithBookCountAsync(PagedRequest request)
+    {
+        const string query = @"
+        SELECT a.id, a.name, a.surname,
+               COUNT(b.id) AS books_count
+        FROM authors a
+        LEFT JOIN bookauthors ba ON ba.author_id = a.id
+        LEFT JOIN books b ON b.id = ba.book_id
+        GROUP BY a.id, a.name, a.surname
+        ORDER BY a.id
+        OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY;";
+
+        var result = new List<AuthorWithBooksCountDTO>();
+
+        await _openDbConnectionAsync();
+
+        await using var command = new SqlCommand(query, _connection, _transaction());
+        command.Parameters.Add(new SqlParameter("@Offset", (request.PageNumber - 1) * request.PageSize));
+        command.Parameters.Add(new SqlParameter("@PageSize", request.PageSize));
+
+        await using var reader = await command.ExecuteReaderAsync();
+
+        var idOrd = reader.GetOrdinal("id");
+        var nameOrd = reader.GetOrdinal("name");
+        var surnameOrd = reader.GetOrdinal("surname");
+        var countOrd = reader.GetOrdinal("books_count");
+
+        while (await reader.ReadAsync())
+        {
+            result.Add(new AuthorWithBooksCountDTO
+            {
+                Id = reader.GetInt32(idOrd),
+                Name = reader.GetString(nameOrd),
+                Surname = reader.GetString(surnameOrd),
+                Count = reader.GetInt32(countOrd)
+            });
+        }
+
+        return result;
+    }
+    public async Task<List<AuthorDTO>> GetAuthors(KeysetRequest request)
     {
         const string sql = @"
-        SELECT a.id, a.name, a.surname
+        SELECT TOP (@PageSize) a.id, a.name, a.surname
         FROM authors a
-        ORDER BY a.id";
+        WHERE (@LastItemId IS NULL OR a.id > @LastItemId)
+        ORDER BY a.id;";
 
         var result = new List<AuthorDTO>();
 
         await _openDbConnectionAsync();
 
         await using var command = new SqlCommand(sql, _connection, _transaction());
+        command.Parameters.Add(new SqlParameter("@PageSize", request.PageSize));
+        command.Parameters.Add(new SqlParameter("@LastItemId", (object?)request.LastItemIndex ?? DBNull.Value));
         await using var reader = await command.ExecuteReaderAsync();
 
         var idOrd = reader.GetOrdinal("id");
@@ -103,5 +151,50 @@ internal class AuthorsRepository : BaseRepository, IAuthorsRepository
         }
 
         return result;
+    }
+
+    public async Task<List<AuthorDTO>> GetAuthors(PagedRequest request)
+    {
+        const string sql = @"
+        SELECT a.id, a.name, a.surname
+        FROM authors a
+        ORDER BY a.id
+        OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY;";
+
+        var result = new List<AuthorDTO>();
+
+        await _openDbConnectionAsync();
+
+        await using var command = new SqlCommand(sql, _connection, _transaction());
+        command.Parameters.Add(new SqlParameter("@Offset", (request.PageNumber - 1) * request.PageSize));
+        command.Parameters.Add(new SqlParameter("@PageSize", request.PageSize));
+        await using var reader = await command.ExecuteReaderAsync();
+
+        var idOrd = reader.GetOrdinal("id");
+        var nameOrd = reader.GetOrdinal("name");
+        var surnameOrd = reader.GetOrdinal("surname");
+
+        while (await reader.ReadAsync())
+        {
+            result.Add(new AuthorDTO
+            {
+                Id = reader.GetInt32(idOrd),
+                Name = reader.GetString(nameOrd),
+                Surname = reader.GetString(surnameOrd),
+            });
+        }
+
+        return result;
+    }
+
+    public async Task<int> GetTotalEntries()
+    {
+        const string query = "Select Count(a.id) from authors a";
+
+        await _openDbConnectionAsync();
+
+        await using var command = new SqlCommand(query, _connection, _transaction());
+
+        return (int)await command.ExecuteScalarAsync();
     }
 }

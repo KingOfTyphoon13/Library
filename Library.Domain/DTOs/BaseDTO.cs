@@ -1,6 +1,8 @@
-﻿namespace Library.Domain.DTOs;
+﻿using Library.Domain.Common.Pagination;
 
-public abstract class BaseDTO
+namespace Library.Domain.DTOs;
+
+public abstract class BaseDTO : IIdentifiable
 {
     public int Id { get; set; }
 }

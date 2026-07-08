@@ -213,4 +213,15 @@ internal class BooksRepository : BaseRepository, IBooksRepository
 
         return books.Values.ToList();
     }
+
+    public async Task<int> GetTotalEntries()
+    {
+        const string query = "Select Count(*) from books";
+
+        await _openDbConnectionAsync();
+
+        await using var command = new SqlCommand(query, _connection, _transaction());
+
+        return (int)await command.ExecuteScalarAsync();
+    }
 }

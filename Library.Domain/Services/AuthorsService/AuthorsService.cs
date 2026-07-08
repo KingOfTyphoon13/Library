@@ -1,4 +1,5 @@
-﻿using Library.Domain.DataAccess;
+﻿using Library.Domain.Common.Pagination;
+using Library.Domain.DataAccess;
 using Library.Domain.DTOs.Authors;
 using Microsoft.Extensions.Logging;
 
@@ -13,14 +14,80 @@ public class AuthorsService : BaseService, IAuthorsService
         _authorRepository = _unitOfWork.Authors;
     }
 
-    public async Task<List<AuthorDTO>> GetAuthorsAsync()
+    public async Task<PagedResult<AuthorDTO>> GetAuthorsAsync(PagedRequest request)
     {
-        return await _authorRepository.GetAuthors();
+        var totalItemsCount = await _authorRepository.GetTotalEntries();
+
+        if (totalItemsCount <= (request.PageNumber - 1) * request.PageSize)
+        {
+            return new PagedResult<AuthorDTO>
+            {
+                Items = [],
+                TotalCount = totalItemsCount,
+                PageSize = request.PageSize,
+                PageNumber = request.PageNumber
+            };
+        }
+
+        var result = await _authorRepository.GetAuthors(request);
+
+        return new PagedResult<AuthorDTO>
+        {
+            Items = result,
+            TotalCount = totalItemsCount,
+            PageSize = request.PageSize,
+            PageNumber = request.PageNumber
+        };
     }
 
-    public async Task<List<AuthorWithBooksCountDTO>> GetAuthorWithBooksCountsAsync()
+    public async Task<KeysetResult<AuthorDTO>> GetAuthorsAsync(KeysetRequest request)
     {
-        return await _authorRepository.GetAllWithBookCountAsync();
+        var fetchRequest = new KeysetRequest
+        {
+            LastItemIndex = request.LastItemIndex,
+            PageSize = request.PageSize + 1
+        };
+
+        var result = await _authorRepository.GetAuthors(fetchRequest);
+
+        var hasNextPage = result.Count > request.PageSize;
+        if (hasNextPage)
+        {
+            result.RemoveAt(result.Count - 1);
+        }
+
+        return new KeysetResult<AuthorDTO>
+        {
+            Items = result,
+            PageSize = request.PageSize,
+            HasNextPage = hasNextPage
+        };
+    }
+
+    public async Task<PagedResult<AuthorWithBooksCountDTO>> GetAuthorWithBooksCountsAsync(PagedRequest request)
+    {
+        var totalItemsCount = await _authorRepository.GetTotalEntries();
+
+        if (totalItemsCount <= (request.PageNumber - 1) * request.PageSize)
+        {
+            return new PagedResult<AuthorWithBooksCountDTO>
+            {
+                Items = [],
+                TotalCount = totalItemsCount,
+                PageSize = request.PageSize,
+                PageNumber = request.PageNumber
+            };
+        }
+
+        var result = await _authorRepository.GetAllWithBookCountAsync(request);
+
+        return new()
+        {
+            Items = result,
+            TotalCount = totalItemsCount,
+            PageSize = request.PageSize,
+            PageNumber = request.PageNumber
+        };
     }
 
     public async Task AddAuthorAsync(AuthorDTO newAuthor)
@@ -29,5 +96,29 @@ public class AuthorsService : BaseService, IAuthorsService
             throw new ArgumentException("Either Name or Surname must be provided.", nameof(newAuthor));
 
         await _authorRepository.AddAsync(newAuthor);
+    }
+
+    public async Task<KeysetResult<AuthorWithBooksCountDTO>> GetAuthorWithBooksCountsAsync(KeysetRequest request)
+    {
+        var fetchRequest = new KeysetRequest
+        {
+            LastItemIndex = request.LastItemIndex,
+            PageSize = request.PageSize + 1
+        };
+
+        var result = await _authorRepository.GetAllWithBookCountAsync(fetchRequest);
+
+        var hasNextPage = result.Count > request.PageSize;
+        if (hasNextPage)
+        {
+            result.RemoveAt(result.Count - 1);
+        }
+
+        return new KeysetResult<AuthorWithBooksCountDTO>
+        {
+            Items = result,
+            PageSize = request.PageSize,
+            HasNextPage = hasNextPage
+        };
     }
 }
