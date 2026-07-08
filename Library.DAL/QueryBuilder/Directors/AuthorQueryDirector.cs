@@ -3,7 +3,7 @@ using Library.Domain.DTOs.Authors;
 
 namespace Library.DAL.QueryBuilder.Directors;
 
-public static class AuthorQueryDirector
+internal static class AuthorQueryDirector
 {
     public const string Table = "authors";
 

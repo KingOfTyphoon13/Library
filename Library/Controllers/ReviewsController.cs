@@ -1,8 +1,10 @@
 ﻿using AutoMapper;
+using Library.Domain.Common.Pagination;
 using Library.Domain.DTOs.Reviews;
 using Library.Domain.Services.BooksService;
 using Library.Domain.Services.ReviewService;
 using Library.ViewModels.Books;
+using Library.ViewModels.Common.Pagination;
 using Library.ViewModels.Reviews;
 using Microsoft.AspNetCore.Mvc;
 
@@ -19,13 +21,31 @@ public class ReviewsController : BaseController
         _bookService = bookService ?? throw new ArgumentNullException(nameof(_bookService));
     }
 
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(int pageNumber = 1, int pageSize = 10)
     {
-        var reviews = (await _reviewService.GetReviewsAsync())
-                            .Select(_mapper.Map<ReviewListItemViewModel>)
-                            .ToList();
+        var request = new PagedRequest { PageNumber = pageNumber, PageSize = pageSize };
+        var result = await _reviewService.GetReviewsAsync(request);
 
-        var model = new ReviewsIndexViewModel { RecentReviews = reviews };
+        var paginatedModel = new PaginatedViewModel<ReviewListItemViewModel>
+        {
+            Items = result.Items.Select(_mapper.Map<ReviewListItemViewModel>).ToList(),
+            Pagination = new PaginationViewModel
+            {
+                PageNumber = result.PageNumber,
+                TotalPages = result.TotalPages,
+                PageSize = result.PageSize,
+                ActionName = "Index",
+                ControllerName = "Reviews",
+                ContainerId = "paged-content"
+            }
+        };
+
+        var model = new ReviewsIndexViewModel() { RecentReviews = paginatedModel };
+
+        if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+        {
+            return PartialView("_PaginatedContent", model);
+        }
 
         return View(model);
     }

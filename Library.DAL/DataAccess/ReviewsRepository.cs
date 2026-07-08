@@ -1,4 +1,6 @@
-﻿using Library.Domain.DataAccess;
+﻿using Library.DAL.QueryBuilder.Directors;
+using Library.Domain.Common.Pagination;
+using Library.Domain.DataAccess;
 using Library.Domain.DTOs.Authors;
 using Library.Domain.DTOs.Books;
 using Library.Domain.DTOs.Reviews;
@@ -12,35 +14,26 @@ internal class ReviewsRepository : BaseRepository, IReviewsRepository
     {
     }
 
-    public async Task<List<ReviewWithBookInfoDTO>> GetReviewsAsync()
+    public async Task<List<ReviewWithBookInfoDTO>> GetReviewsAsync(PagedRequest request)
     {
-        const string sql = @"
-        SELECT 
-            r.id, r.book_id, r.score,
-            b.title, b.publication_year,
-            a.id AS author_id, a.name, a.surname
-        FROM reviews r
-        JOIN books b ON b.id = r.book_id
-        JOIN bookauthors ba ON ba.book_id = b.id
-        JOIN authors a ON a.id = ba.author_id
-        ORDER BY r.id, b.id";
-
-        var result = new List<ReviewWithBookInfoDTO>();
-        var reviewDict = new Dictionary<int, ReviewWithBookInfoDTO>();
+        var query = ReviewQueryDirector.GetPagedReviewsWithBookInfo(request);
 
         await _openDbConnectionAsync();
 
-        await using var command = new SqlCommand(sql, _connection, _transaction());
+        await using var command = query.ToCommand(_connection, _transaction());
         await using var reader = await command.ExecuteReaderAsync();
 
-        var idOrd = reader.GetOrdinal("id");
-        var bookIdOrd = reader.GetOrdinal("book_id");
-        var scoreOrd = reader.GetOrdinal("score");
-        var titleOrd = reader.GetOrdinal("title");
-        var yearOrd = reader.GetOrdinal("publication_year");
-        var authorIdOrd = reader.GetOrdinal("author_id");
-        var nameOrd = reader.GetOrdinal("name");
-        var surnameOrd = reader.GetOrdinal("surname");
+        var idOrd = reader.GetOrdinal(ReviewQueryDirector.Columns.Id);
+        var bookIdOrd = reader.GetOrdinal(ReviewQueryDirector.Columns.BookId);
+        var scoreOrd = reader.GetOrdinal(ReviewQueryDirector.Columns.Score);
+        var titleOrd = reader.GetOrdinal(ReviewQueryDirector.Columns.Title);
+        var yearOrd = reader.GetOrdinal(ReviewQueryDirector.Columns.PublicationYear);
+        var authorIdOrd = reader.GetOrdinal(ReviewQueryDirector.Columns.AuthorId);
+        var nameOrd = reader.GetOrdinal(ReviewQueryDirector.Columns.Name);
+        var surnameOrd = reader.GetOrdinal(ReviewQueryDirector.Columns.Surname);
+
+        var result = new List<ReviewWithBookInfoDTO>();
+        var reviewDict = new Dictionary<int, ReviewWithBookInfoDTO>();
 
         while (await reader.ReadAsync())
         {
@@ -66,14 +59,12 @@ internal class ReviewsRepository : BaseRepository, IReviewsRepository
                 result.Add(review);
             }
 
-            var author = new AuthorDTO
+            review.BookInfo.Authors.Add(new AuthorDTO
             {
                 Id = reader.GetInt32(authorIdOrd),
                 Name = reader.GetString(nameOrd),
                 Surname = reader.GetString(surnameOrd)
-            };
-
-            review.BookInfo.Authors.Add(author);
+            });
         }
 
         return result;
@@ -81,25 +72,21 @@ internal class ReviewsRepository : BaseRepository, IReviewsRepository
 
     public async Task<int> GetTotalEntries()
     {
-        const string query = "Select Count(*) from reviews";
+        var query = ReviewQueryDirector.GetTotalCount();
 
         await _openDbConnectionAsync();
 
-        await using var command = new SqlCommand(query, _connection, _transaction());
-
+        await using var command = query.ToCommand(_connection, _transaction());
         return (int)await command.ExecuteScalarAsync();
     }
 
     public async Task<int> AddAsync(ReviewDTO dto)
     {
-        const string query = "Insert Into reviews (book_id, score) " +
-                             "Output Inserted.Id " +
-                             "Values (@BookID, @Score) ";
+        var query = ReviewQueryDirector.Insert(dto);
 
-        var cmd = new SqlCommand(query, _connection, _transaction());
-        cmd.Parameters.Add(new SqlParameter("@BookID", dto.BookId));
-        cmd.Parameters.Add(new SqlParameter("@Score", dto.Score));
+        await _openDbConnectionAsync();
 
-        return (int)await cmd.ExecuteScalarAsync();
+        await using var command = query.ToCommand(_connection, _transaction());
+        return (int)await command.ExecuteScalarAsync();
     }
 }

@@ -29,6 +29,7 @@ public class AuthorsController : BaseController
             {
                 PageNumber = result.PageNumber,
                 TotalPages = result.TotalPages,
+                PageSize = result.PageSize,
                 ActionName = "Index",
                 ControllerName = "Authors"
             }

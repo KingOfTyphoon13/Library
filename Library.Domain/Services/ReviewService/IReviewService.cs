@@ -1,10 +1,11 @@
-﻿using Library.Domain.DTOs.Reviews;
+﻿using Library.Domain.Common.Pagination;
+using Library.Domain.DTOs.Reviews;
 
 namespace Library.Domain.Services.ReviewService;
 
 public interface IReviewService
 {
-    Task<List<ReviewWithBookInfoDTO>> GetReviewsAsync();
+    Task<PagedResult<ReviewWithBookInfoDTO>> GetReviewsAsync(PagedRequest request);
 
     Task SaveReviewAsync(ReviewDTO review);
 }
