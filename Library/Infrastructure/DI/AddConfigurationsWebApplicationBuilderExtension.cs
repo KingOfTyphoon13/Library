@@ -13,6 +13,8 @@ public static class AddConfigurationsWebApplicationBuilderExtension
             loggerConfiguration.ReadFrom.Configuration(context.Configuration);
         });
 
+
+
         return builder;
     }
 }
