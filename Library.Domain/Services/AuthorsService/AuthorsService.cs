@@ -48,36 +48,6 @@ public class AuthorsService : BaseService, IAuthorsService
         };
     }
 
-    public async Task<KeysetResult<AuthorDTO>> GetAuthorsAsync(KeysetRequest request)
-    {
-        _logger.LogInformation("Fetching authors with keyset pagination. PageSize: {PageSize}, LastItemIndex: {LastItemIndex}",
-            request.PageSize, request.LastItemIndex);
-
-        var fetchRequest = new KeysetRequest
-        {
-            LastItemIndex = request.LastItemIndex,
-            PageSize = request.PageSize + 1
-        };
-
-        var result = await _authorRepository.GetAuthors(fetchRequest);
-
-        var hasNextPage = result.Count > request.PageSize;
-        if (hasNextPage)
-        {
-            result.RemoveAt(result.Count - 1);
-        }
-
-        _logger.LogInformation("Retrieved {ItemCount} authors. Has next page: {HasNextPage}",
-            result.Count, hasNextPage);
-
-        return new KeysetResult<AuthorDTO>
-        {
-            Items = result,
-            PageSize = request.PageSize,
-            HasNextPage = hasNextPage
-        };
-    }
-
     public async Task<PagedResult<AuthorWithBooksCountDTO>> GetAuthorWithBooksCountsAsync(PagedRequest request)
     {
         _logger.LogInformation("Fetching authors with book counts. Page: {PageNumber}, Size: {PageSize}",
@@ -110,36 +80,6 @@ public class AuthorsService : BaseService, IAuthorsService
         };
     }
 
-    public async Task<KeysetResult<AuthorWithBooksCountDTO>> GetAuthorWithBooksCountsAsync(KeysetRequest request)
-    {
-        _logger.LogInformation("Fetching authors with book counts using keyset. PageSize: {PageSize}",
-            request.PageSize);
-
-        var fetchRequest = new KeysetRequest
-        {
-            LastItemIndex = request.LastItemIndex,
-            PageSize = request.PageSize + 1
-        };
-
-        var result = await _authorRepository.GetAllWithBookCountAsync(fetchRequest);
-
-        var hasNextPage = result.Count > request.PageSize;
-        if (hasNextPage)
-        {
-            result.RemoveAt(result.Count - 1);
-        }
-
-        _logger.LogInformation("Retrieved {ItemCount} authors with book counts. Has next page: {HasNextPage}",
-            result.Count, hasNextPage);
-
-        return new KeysetResult<AuthorWithBooksCountDTO>
-        {
-            Items = result,
-            PageSize = request.PageSize,
-            HasNextPage = hasNextPage
-        };
-    }
-
     public async Task<int> GetAuthorsNumberAsync()
     {
         _logger.LogDebug("Retrieving total number of authors");
@@ -148,7 +88,7 @@ public class AuthorsService : BaseService, IAuthorsService
         return count;
     }
 
-    public async Task AddAuthorAsync(AuthorDTO newAuthor)
+    public async Task<int> AddAuthorAsync(AuthorDTO newAuthor)
     {
         _logger.LogInformation("Adding new author. Name: {Name}, Surname: {Surname}",
             newAuthor.Name, newAuthor.Surname);
@@ -159,8 +99,8 @@ public class AuthorsService : BaseService, IAuthorsService
             throw new ArgumentException("Either Name or Surname must be provided.", nameof(newAuthor));
         }
 
-        await _authorRepository.AddAsync(newAuthor);
-
         _logger.LogInformation("Successfully added new author");
+
+        return await _authorRepository.AddAsync(newAuthor);
     }
 }
