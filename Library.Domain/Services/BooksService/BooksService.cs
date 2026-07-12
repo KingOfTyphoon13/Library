@@ -144,7 +144,7 @@ public class BooksService : BaseService, IBooksService
             foreach (var author in newBook.Authors.Where(a => a.Id == 0))
             {
                 _logger.LogDebug("Adding new author for book: {AuthorName}", author.Name);
-                author.Id = await _unitOfWork.Authors.AddAsync(author);
+                author.Id = await _authorsService.AddAuthorAsync(author);
             }
 
             await _unitOfWork.Books.AddAsync(newBook);
