@@ -7,13 +7,9 @@ public interface IAuthorsService
 {
     Task<PagedResult<AuthorDTO>> GetAuthorsAsync(PagedRequest request);
 
-    Task<KeysetResult<AuthorDTO>> GetAuthorsAsync(KeysetRequest request);
-
     Task<PagedResult<AuthorWithBooksCountDTO>> GetAuthorWithBooksCountsAsync(PagedRequest request);
-
-    Task<KeysetResult<AuthorWithBooksCountDTO>> GetAuthorWithBooksCountsAsync(KeysetRequest request);
 
     Task<int> GetAuthorsNumberAsync();
 
-    Task AddAuthorAsync(AuthorDTO newAuthor);
+    Task<int> AddAuthorAsync(AuthorDTO newAuthor);
 }
