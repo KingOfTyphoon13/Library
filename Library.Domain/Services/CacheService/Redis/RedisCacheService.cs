@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Caching.Distributed;
+﻿using Library.Domain.Services.CacheService.Keys;
 using Microsoft.Extensions.Options;
 using StackExchange.Redis;
 using System.Text.Json;
@@ -15,31 +15,28 @@ public class RedisCacheService : ICacheService
         _db = redis.GetDatabase();
         _settings = settings.Value;
     }
-
-    public async Task<T?> GetAsync<T>(string key)
+    public async Task<T?> GetAsync<T>(CacheKey key)
     {
-        var value = await _db.StringGetAsync(key);
-        if (value.IsNullOrEmpty) return default;
-
-        var stringValue = (string)value!;
-        return JsonSerializer.Deserialize<T>(stringValue);
+        var value = await _db.StringGetAsync(await ResolveAsync(key));
+        return value.IsNullOrEmpty ? default : JsonSerializer.Deserialize<T>((string)value!);
     }
 
-    public async Task<bool> SetAsync<T>(string key, T value, TimeSpan? absoluteExpiry = null)
+    public async Task SetAsync<T>(CacheKey key, T value, TimeSpan? absoluteExpiry = null)
     {
-        var options = new DistributedCacheEntryOptions();
         var expiry = absoluteExpiry ?? _settings.AbsoluteExpiration;
-
-        return await _db.StringSetAsync(key, JsonSerializer.Serialize(value), expiry);
+        await _db.StringSetAsync(await ResolveAsync(key), JsonSerializer.Serialize(value), expiry);
     }
 
-    public async Task RemoveAsync(string key)
-    {
-        await _db.KeyDeleteAsync(key);
-    }
+    public async Task RemoveAsync(CacheKey key) => await _db.KeyDeleteAsync(await ResolveAsync(key));
 
-    public async Task<long> IncrementAsync(string key)
+    public Task InvalidateAsync(string resource) => _db.StringIncrementAsync($"{resource}:version");
+
+    private async Task<string> ResolveAsync(CacheKey key)
     {
-        return await _db.StringIncrementAsync(key);
+        if (!key.IsVersioned) return $"{key.Resource}:{key.Suffix}";
+
+        var version = await _db.StringGetAsync($"{key.Resource}:version");
+        var v = version.IsNullOrEmpty ? 0 : (long)version;
+        return $"{key.Resource}:v{v}:{key.Suffix}";
     }
 }

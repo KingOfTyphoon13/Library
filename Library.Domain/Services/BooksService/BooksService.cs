@@ -2,6 +2,7 @@
 using Library.Domain.DataAccess;
 using Library.Domain.DTOs.Books;
 using Library.Domain.Services.AuthorsService;
+using Library.Domain.Services.CacheService;
 using Microsoft.Extensions.Logging;
 using System.ComponentModel.DataAnnotations;
 
@@ -12,8 +13,8 @@ public class BooksService : BaseService, IBooksService
     private readonly IBooksRepository _booksRepository;
     private readonly IAuthorsService _authorsService;
 
-    public BooksService(IAuthorsService authorsService, IUnitOfWork unitOfWork, ILogger<BooksService> logger)
-        : base(unitOfWork, logger)
+    public BooksService(IAuthorsService authorsService, IUnitOfWork unitOfWork, ICacheService cacheService, ILogger<BooksService> logger)
+        : base(unitOfWork, cacheService, logger)
     {
         _authorsService = authorsService ?? throw new ArgumentNullException(nameof(authorsService));
         _booksRepository = _unitOfWork.Books;

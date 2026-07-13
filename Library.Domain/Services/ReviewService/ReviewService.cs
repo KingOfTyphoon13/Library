@@ -1,6 +1,7 @@
 ﻿using Library.Domain.Common.Pagination;
 using Library.Domain.DataAccess;
 using Library.Domain.DTOs.Reviews;
+using Library.Domain.Services.CacheService;
 using Microsoft.Extensions.Logging;
 
 namespace Library.Domain.Services.ReviewService;
@@ -9,8 +10,8 @@ public class ReviewService : BaseService, IReviewService
 {
     private readonly IReviewsRepository _reviewRepository;
 
-    public ReviewService(IUnitOfWork unitOfWork, ILogger<ReviewService> logger)
-        : base(unitOfWork, logger)
+    public ReviewService(IUnitOfWork unitOfWork, ICacheService cacheService, ILogger<ReviewService> logger)
+        : base(unitOfWork, cacheService, logger)
     {
         _reviewRepository = _unitOfWork.Reviews;
     }

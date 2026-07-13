@@ -1,6 +1,7 @@
 ﻿using Library.Domain.Common.Pagination;
 using Library.Domain.DataAccess;
 using Library.Domain.DTOs.Authors;
+using Library.Domain.Services.CacheService;
 using Microsoft.Extensions.Logging;
 
 namespace Library.Domain.Services.AuthorsService;
@@ -9,8 +10,8 @@ public class AuthorsService : BaseService, IAuthorsService
 {
     private readonly IAuthorsRepository _authorRepository;
 
-    public AuthorsService(IUnitOfWork unitOfWork, ILogger<AuthorsService> logger)
-        : base(unitOfWork, logger)
+    public AuthorsService(IUnitOfWork unitOfWork, ICacheService cacheService, ILogger<AuthorsService> logger)
+        : base(unitOfWork, cacheService, logger)
     {
         _authorRepository = _unitOfWork.Authors;
     }
