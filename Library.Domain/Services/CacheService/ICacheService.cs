@@ -7,5 +7,5 @@ public interface ICacheService
     Task<T?> GetAsync<T>(CacheKey key);
     Task SetAsync<T>(CacheKey key, T value, TimeSpan? absoluteExpiry = null);
     Task RemoveAsync(CacheKey key);
-    Task InvalidateAsync(string resource);
+    Task<long> InvalidateAsync(string resource);
 }

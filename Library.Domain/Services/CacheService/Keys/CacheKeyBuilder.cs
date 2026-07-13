@@ -2,17 +2,18 @@
 
 internal sealed class CacheKeyBuilder
 {
-    private readonly string _resource;
-    internal CacheKeyBuilder(string resource) => _resource = resource;
+    internal readonly string Resource;
+
+    internal CacheKeyBuilder(string resource) => Resource = resource;
 
     internal CacheKey Paged(int pageNumber, int pageSize) =>
-        CacheKey.Versioned(_resource, $"paged:{pageNumber}:{pageSize}");
+        CacheKey.Versioned(Resource, $"paged:{pageNumber}:{pageSize}");
 
     internal CacheKey Keyset(int? lastItemId, int pageSize) =>
-        CacheKey.Versioned(_resource, $"keyset:{lastItemId?.ToString() ?? "start"}:{pageSize}");
+        CacheKey.Versioned(Resource, $"keyset:{lastItemId?.ToString() ?? "start"}:{pageSize}");
 
     internal CacheKey PagedScoped(string scopeName, int scopeId, int pageNumber, int pageSize) =>
-        CacheKey.Versioned(_resource, $"{scopeName}:{scopeId}:paged:{pageNumber}:{pageSize}");
+        CacheKey.Versioned(Resource, $"{scopeName}:{scopeId}:paged:{pageNumber}:{pageSize}");
 
-    internal CacheKey ById(int id) => CacheKey.Plain(_resource, $"id:{id}");
+    internal CacheKey ById(int id) => CacheKey.Plain(Resource, $"id:{id}");
 }

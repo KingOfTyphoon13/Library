@@ -2,6 +2,7 @@
 using Library.Domain.DataAccess;
 using Library.Domain.DTOs.Authors;
 using Library.Domain.Services.CacheService;
+using Library.Domain.Services.CacheService.Keys;
 using Microsoft.Extensions.Logging;
 
 namespace Library.Domain.Services.AuthorsService;
@@ -21,32 +22,38 @@ public class AuthorsService : BaseService, IAuthorsService
         _logger.LogInformation("Fetching authors with paging. Page: {PageNumber}, Size: {PageSize}",
             request.PageNumber, request.PageSize);
 
-        var totalItemsCount = await _authorRepository.GetTotalEntriesAsync();
-
-        if (totalItemsCount <= (request.PageNumber - 1) * request.PageSize)
+        var cacheKey = CacheKeys.Authors.Paged(request.PageNumber, request.PageSize);
+        var cached = await _cacheService.GetAsync<PagedResult<AuthorDTO>>(cacheKey);
+        if (cached is not null)
         {
-            _logger.LogInformation("No items in requested page. Total count: {TotalCount}", totalItemsCount);
-            return new PagedResult<AuthorDTO>
-            {
-                Items = [],
-                TotalCount = totalItemsCount,
-                PageSize = request.PageSize,
-                PageNumber = request.PageNumber
-            };
+            _logger.LogInformation("Cache hit for authors. Page: {PageNumber}", request.PageNumber);
+            return cached;
         }
 
-        var result = await _authorRepository.GetAuthors(request);
+        var totalItemsCount = await _authorRepository.GetTotalEntriesAsync();
+        var isOutOfRange = totalItemsCount <= (request.PageNumber - 1) * request.PageSize;
+        var logMessage = string.Format("No items in requested page. Total count: {0}", totalItemsCount);
 
-        _logger.LogInformation("Successfully retrieved {ItemCount} authors out of {TotalCount}",
-            result.Count, totalItemsCount);
+        List<AuthorDTO> items = [];
 
-        return new PagedResult<AuthorDTO>
+        if (!isOutOfRange)
         {
-            Items = result,
+            items = await _authorRepository.GetAuthors(request);
+            logMessage = string.Format("Successfully retrieved {0} authors out of {1}", items.Count, totalItemsCount);
+        }
+
+        _logger.LogInformation(logMessage);
+
+        var result = new PagedResult<AuthorDTO>
+        {
+            Items = items,
             TotalCount = totalItemsCount,
             PageSize = request.PageSize,
             PageNumber = request.PageNumber
         };
+
+        await _cacheService.SetAsync(cacheKey, result);
+        return result;
     }
 
     public async Task<PagedResult<AuthorWithBooksCountDTO>> GetAuthorWithBooksCountsAsync(PagedRequest request)
@@ -54,31 +61,36 @@ public class AuthorsService : BaseService, IAuthorsService
         _logger.LogInformation("Fetching authors with book counts. Page: {PageNumber}, Size: {PageSize}",
             request.PageNumber, request.PageSize);
 
-        var totalItemsCount = await _authorRepository.GetTotalEntriesAsync();
-
-        if (totalItemsCount <= (request.PageNumber - 1) * request.PageSize)
+        var cacheKey = CacheKeys.Authors.Paged(request.PageNumber, request.PageSize);
+        var cached = await _cacheService.GetAsync<PagedResult<AuthorWithBooksCountDTO>>(cacheKey);
+        if (cached is not null)
         {
-            _logger.LogInformation("No items in requested page for authors with book counts. Total: {TotalCount}", totalItemsCount);
-            return new PagedResult<AuthorWithBooksCountDTO>
-            {
-                Items = [],
-                TotalCount = totalItemsCount,
-                PageSize = request.PageSize,
-                PageNumber = request.PageNumber
-            };
+            _logger.LogInformation("Cache hit for authors with book counts. Page: {PageNumber}", request.PageNumber);
+            return cached;
         }
 
-        var result = await _authorRepository.GetAllWithBookCountAsync(request);
+        var totalItemsCount = await _authorRepository.GetTotalEntriesAsync();
 
-        _logger.LogInformation("Successfully retrieved {ItemCount} authors with book counts", result.Count);
+        var isOutOfRange = totalItemsCount <= (request.PageNumber - 1) * request.PageSize;
+        var items = isOutOfRange
+            ? []
+            : await _authorRepository.GetAllWithBookCountAsync(request);
 
-        return new()
+        _logger.LogInformation(isOutOfRange
+            ? "No items in requested page for authors with book counts. Total: {TotalCount}"
+            : "Successfully retrieved {ItemCount} authors with book counts",
+            isOutOfRange ? totalItemsCount : items.Count);
+
+        var result = new PagedResult<AuthorWithBooksCountDTO>
         {
-            Items = result,
+            Items = items,
             TotalCount = totalItemsCount,
             PageSize = request.PageSize,
             PageNumber = request.PageNumber
         };
+
+        await _cacheService.SetAsync(cacheKey, result);
+        return result;
     }
 
     public async Task<int> GetAuthorsNumberAsync()
@@ -100,8 +112,12 @@ public class AuthorsService : BaseService, IAuthorsService
             throw new ArgumentException("Either Name or Surname must be provided.", nameof(newAuthor));
         }
 
+        var id = await _authorRepository.AddAsync(newAuthor);
+
+        await _cacheService.InvalidateAsync(CacheKeys.Authors.Resource);
+
         _logger.LogInformation("Successfully added new author");
 
-        return await _authorRepository.AddAsync(newAuthor);
+        return id;
     }
 }

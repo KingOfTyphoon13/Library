@@ -5,6 +5,7 @@ using Library.Domain.Services.BooksService;
 using Library.Domain.Services.CacheService;
 using Library.Domain.Services.CacheService.Redis;
 using Library.Domain.Services.ReviewService;
+using Microsoft.Extensions.Options;
 using StackExchange.Redis;
 
 namespace Library.Infrastructure.DI;
@@ -12,7 +13,6 @@ namespace Library.Infrastructure.DI;
 public static class AddServicesWebApplicationBuilderExtension
 {
     private const string _connectionStringSection = "DBConnection";
-    private const string _connectionStringRedisSection = "RedisConnection";
 
     public static WebApplicationBuilder AddServices(this WebApplicationBuilder builder)
     {
@@ -21,7 +21,11 @@ public static class AddServicesWebApplicationBuilderExtension
 
         services.AddOptions(configuration);
 
-        services.AddSingleton<IConnectionMultiplexer>(sp => ConnectionMultiplexer.Connect(configuration.GetConnectionString(_connectionStringRedisSection)));
+        services.AddSingleton<IConnectionMultiplexer>(sp =>
+        {
+            var settings = sp.GetRequiredService<IOptions<RedisCacheSettings>>().Value;
+            return ConnectionMultiplexer.Connect(settings.ToConfigurationOptions());
+        });
 
         services.AddSingleton<ICacheService, RedisCacheService>();
 
@@ -48,6 +52,7 @@ public static class AddServicesWebApplicationBuilderExtension
     {
         services.AddOptions<RedisCacheSettings>()
             .Bind(configuration.GetSection(RedisCacheSettings.Section))
+            .ValidateDataAnnotations()
             .ValidateOnStart();
 
         return services;
