@@ -3,6 +3,7 @@ using Library.Domain.DataAccess;
 using Library.Domain.DTOs.Books;
 using Library.Domain.Services.AuthorsService;
 using Library.Domain.Services.CacheService;
+using Library.Domain.Services.CacheService.Keys;
 using Microsoft.Extensions.Logging;
 using System.ComponentModel.DataAnnotations;
 
@@ -23,110 +24,47 @@ public class BooksService : BaseService, IBooksService
     public async Task<BookDTO?> GetBookByIdAsync(int id)
     {
         _logger.LogInformation("Fetching book by ID: {BookId}", id);
+
+        var cacheKey = CacheKeys.Books.ById(id);
+        var cached = await _cacheService.GetAsync<BookDTO>(cacheKey);
+        if (cached is not null)
+        {
+            _logger.LogInformation("Cache hit for book {BookId}", id);
+            return cached;
+        }
+
         var book = await _booksRepository.GetByIdAsync(id);
         _logger.LogInformation("Book {BookId} {Found}", id, book != null ? "found" : "not found");
+
+        if (book is not null)
+            await _cacheService.SetAsync(cacheKey, book);
+
         return book;
     }
 
-    public async Task<PagedResult<BookWithAuthorsDTO>> GetBooksWithAuthorsAsync(PagedRequest request)
-    {
-        _logger.LogInformation("Fetching books with authors. Page: {PageNumber}, Size: {PageSize}",
-            request.PageNumber, request.PageSize);
+    public Task<PagedResult<BookWithAuthorsDTO>> GetBooksWithAuthorsAsync(PagedRequest request) =>
+        GetOrSetPagedAsync(
+            CacheKeys.Books.Paged(request),
+            request,
+            "books with authors",
+            _booksRepository.GetTotalEntriesAsync,
+            () => _booksRepository.GetBooksAsync(request));
 
-        var totalItemsCount = await _booksRepository.GetTotalEntriesAsync();
+    public Task<PagedResult<BookWithAuthorsDTO>> GetBooksWithAuthorsAsync(PagedRequest request, int? publicationYear) =>
+        GetOrSetPagedAsync(
+            CacheKeys.Books.PagedScoped("year", publicationYear?.ToString() ?? "any", request),
+            request,
+            $"books filtered by year {publicationYear}",
+            () => _booksRepository.GetTotalEntriesByPublicationYear(publicationYear),
+            () => _booksRepository.GetByPublicationYearAsync(request, publicationYear));
 
-        if (totalItemsCount <= (request.PageNumber - 1) * request.PageSize)
-        {
-            _logger.LogInformation("No items in requested page. Total books: {TotalCount}", totalItemsCount);
-            return new PagedResult<BookWithAuthorsDTO>
-            {
-                Items = [],
-                TotalCount = totalItemsCount,
-                PageNumber = request.PageNumber,
-                PageSize = request.PageSize
-            };
-        }
-
-        var books = await _booksRepository.GetBooksAsync(request);
-
-        _logger.LogInformation("Successfully retrieved {ItemCount} books with authors out of {TotalCount}",
-            books.Count, totalItemsCount);
-
-        return new PagedResult<BookWithAuthorsDTO>
-        {
-            Items = books,
-            TotalCount = totalItemsCount,
-            PageNumber = request.PageNumber,
-            PageSize = request.PageSize
-        };
-    }
-
-    public async Task<PagedResult<BookWithAuthorsDTO>> GetBooksWithAuthorsAsync(PagedRequest request, int? publicationYear)
-    {
-        _logger.LogInformation("Fetching books with authors filtered by publication year: {Year}. Page: {PageNumber}, Size: {PageSize}",
-            publicationYear, request.PageNumber, request.PageSize);
-
-        var totalItemsCount = await _booksRepository.GetTotalEntriesByPublicationYear(publicationYear);
-
-        if (totalItemsCount <= (request.PageNumber - 1) * request.PageSize)
-        {
-            _logger.LogInformation("No items in requested page for year {Year}. Total: {TotalCount}",
-                publicationYear, totalItemsCount);
-            return new PagedResult<BookWithAuthorsDTO>
-            {
-                Items = [],
-                TotalCount = totalItemsCount,
-                PageNumber = request.PageNumber,
-                PageSize = request.PageSize
-            };
-        }
-
-        var books = await _booksRepository.GetByPublicationYearAsync(request, publicationYear);
-
-        _logger.LogInformation("Retrieved {ItemCount} books for year {Year}", books.Count, publicationYear);
-
-        return new PagedResult<BookWithAuthorsDTO>
-        {
-            Items = books,
-            TotalCount = totalItemsCount,
-            PageNumber = request.PageNumber,
-            PageSize = request.PageSize
-        };
-    }
-
-    public async Task<PagedResult<BookReviewStatsDTO>> GetBookWithMinReviewCountAsync(PagedRequest request, int? minReviewCount)
-    {
-        _logger.LogInformation("Fetching books with minimum review count: {MinReviews}. Page: {PageNumber}, Size: {PageSize}",
-            minReviewCount, request.PageNumber, request.PageSize);
-
-        var totalItemsCount = await _booksRepository.GetTotalEntriesByMinReviewCount(minReviewCount);
-
-        if (totalItemsCount <= (request.PageNumber - 1) * request.PageSize)
-        {
-            _logger.LogInformation("No items in requested page for min reviews {MinReviews}. Total: {TotalCount}",
-                minReviewCount, totalItemsCount);
-            return new PagedResult<BookReviewStatsDTO>
-            {
-                Items = [],
-                TotalCount = totalItemsCount,
-                PageNumber = request.PageNumber,
-                PageSize = request.PageSize
-            };
-        }
-
-        var books = await _booksRepository.GetByMinReviewCountAsync(request, minReviewCount);
-
-        _logger.LogInformation("Retrieved {ItemCount} books with min {MinReviews} reviews",
-            books.Count, minReviewCount);
-
-        return new PagedResult<BookReviewStatsDTO>
-        {
-            Items = books,
-            TotalCount = totalItemsCount,
-            PageNumber = request.PageNumber,
-            PageSize = request.PageSize
-        };
-    }
+    public Task<PagedResult<BookReviewStatsDTO>> GetBookWithMinReviewCountAsync(PagedRequest request, int? minReviewCount) =>
+        GetOrSetPagedAsync(
+            CacheKeys.Books.PagedScoped("minReviews", minReviewCount?.ToString() ?? "any", request),
+            request,
+            $"books with min reviews {minReviewCount}",
+            () => _booksRepository.GetTotalEntriesByMinReviewCount(minReviewCount),
+            () => _booksRepository.GetByMinReviewCountAsync(request, minReviewCount));
 
     public async Task AddBookAsync(CreateBookDTO newBook)
     {
@@ -145,11 +83,13 @@ public class BooksService : BaseService, IBooksService
             foreach (var author in newBook.Authors.Where(a => a.Id == 0))
             {
                 _logger.LogDebug("Adding new author for book: {AuthorName}", author.Name);
-                author.Id = await _authorsService.AddAuthorAsync(author);
+                author.Id = await _authorsService.AddAuthorAsync(author); // already bumps authors:version internally
             }
 
             await _unitOfWork.Books.AddAsync(newBook);
         });
+
+        await _cacheService.InvalidateAsync(CacheKeys.Books.Resource);
 
         _logger.LogInformation("Successfully added book: {Title}", newBook.Title);
     }
