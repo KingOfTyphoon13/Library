@@ -1,6 +1,8 @@
 ﻿using Library.Domain.Common.Pagination;
 using Library.Domain.DataAccess;
 using Library.Domain.DTOs.Authors;
+using Library.Domain.Services.CacheService;
+using Library.Domain.Services.CacheService.Keys;
 using Microsoft.Extensions.Logging;
 
 namespace Library.Domain.Services.AuthorsService;
@@ -9,76 +11,27 @@ public class AuthorsService : BaseService, IAuthorsService
 {
     private readonly IAuthorsRepository _authorRepository;
 
-    public AuthorsService(IUnitOfWork unitOfWork, ILogger<AuthorsService> logger)
-        : base(unitOfWork, logger)
+    public AuthorsService(IUnitOfWork unitOfWork, ICacheService cacheService, ILogger<AuthorsService> logger)
+        : base(unitOfWork, cacheService, logger)
     {
         _authorRepository = _unitOfWork.Authors;
     }
 
-    public async Task<PagedResult<AuthorDTO>> GetAuthorsAsync(PagedRequest request)
-    {
-        _logger.LogInformation("Fetching authors with paging. Page: {PageNumber}, Size: {PageSize}",
-            request.PageNumber, request.PageSize);
+    public Task<PagedResult<AuthorDTO>> GetAuthorsAsync(PagedRequest request) =>
+    GetOrSetPagedAsync(
+        CacheKeys.Authors.Paged(request),
+        request,
+        "authors",
+        _authorRepository.GetTotalEntriesAsync,
+        () => _authorRepository.GetAuthors(request));
 
-        var totalItemsCount = await _authorRepository.GetTotalEntriesAsync();
-
-        if (totalItemsCount <= (request.PageNumber - 1) * request.PageSize)
-        {
-            _logger.LogInformation("No items in requested page. Total count: {TotalCount}", totalItemsCount);
-            return new PagedResult<AuthorDTO>
-            {
-                Items = [],
-                TotalCount = totalItemsCount,
-                PageSize = request.PageSize,
-                PageNumber = request.PageNumber
-            };
-        }
-
-        var result = await _authorRepository.GetAuthors(request);
-
-        _logger.LogInformation("Successfully retrieved {ItemCount} authors out of {TotalCount}",
-            result.Count, totalItemsCount);
-
-        return new PagedResult<AuthorDTO>
-        {
-            Items = result,
-            TotalCount = totalItemsCount,
-            PageSize = request.PageSize,
-            PageNumber = request.PageNumber
-        };
-    }
-
-    public async Task<PagedResult<AuthorWithBooksCountDTO>> GetAuthorWithBooksCountsAsync(PagedRequest request)
-    {
-        _logger.LogInformation("Fetching authors with book counts. Page: {PageNumber}, Size: {PageSize}",
-            request.PageNumber, request.PageSize);
-
-        var totalItemsCount = await _authorRepository.GetTotalEntriesAsync();
-
-        if (totalItemsCount <= (request.PageNumber - 1) * request.PageSize)
-        {
-            _logger.LogInformation("No items in requested page for authors with book counts. Total: {TotalCount}", totalItemsCount);
-            return new PagedResult<AuthorWithBooksCountDTO>
-            {
-                Items = [],
-                TotalCount = totalItemsCount,
-                PageSize = request.PageSize,
-                PageNumber = request.PageNumber
-            };
-        }
-
-        var result = await _authorRepository.GetAllWithBookCountAsync(request);
-
-        _logger.LogInformation("Successfully retrieved {ItemCount} authors with book counts", result.Count);
-
-        return new()
-        {
-            Items = result,
-            TotalCount = totalItemsCount,
-            PageSize = request.PageSize,
-            PageNumber = request.PageNumber
-        };
-    }
+    public Task<PagedResult<AuthorWithBooksCountDTO>> GetAuthorWithBooksCountsAsync(PagedRequest request) =>
+        GetOrSetPagedAsync(
+            CacheKeys.Authors.Paged(request, "WithBookCount"),
+            request,
+            "authors with book counts",
+            _authorRepository.GetTotalEntriesAsync,
+            () => _authorRepository.GetAllWithBookCountAsync(request));
 
     public async Task<int> GetAuthorsNumberAsync()
     {
@@ -99,8 +52,12 @@ public class AuthorsService : BaseService, IAuthorsService
             throw new ArgumentException("Either Name or Surname must be provided.", nameof(newAuthor));
         }
 
+        var id = await _authorRepository.AddAsync(newAuthor);
+
+        await _cacheService.InvalidateAsync(CacheKeys.Authors.Resource);
+
         _logger.LogInformation("Successfully added new author");
 
-        return await _authorRepository.AddAsync(newAuthor);
+        return id;
     }
 }

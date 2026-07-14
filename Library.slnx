@@ -1,4 +1,7 @@
 <Solution>
+  <Project Path="docker-compose.dcproj">
+    <Build />
+  </Project>
   <Project Path="Library.DAL/Library.DAL.csproj" Id="08a674f1-ade5-413d-9e0a-2d35d2220719" />
   <Project Path="Library.Domain/Library.Domain.csproj" Id="f501a127-4a1f-4ae0-9427-fe82ba73aa46" />
   <Project Path="Library/Library.csproj" />

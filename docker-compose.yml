@@ -1,0 +1,6 @@
+services:
+  library:
+    image: ${DOCKER_REGISTRY-}library
+    build:
+      context: .
+      dockerfile: Library/Dockerfile
