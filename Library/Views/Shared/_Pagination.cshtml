@@ -2,13 +2,15 @@
 
 <nav class="pagination" data-container="@Model.ContainerId">
     <a class="page-link first @(Model.PageNumber == 1 ? "disabled" : "")"
-       asp-action="@Model.ActionName" asp-controller="@Model.ControllerName" asp-route-pageNumber="@(Model.PageNumber - 1)">
+       asp-action="@Model.ActionName" asp-controller="@Model.ControllerName"
+       asp-route-pageNumber="@(Model.PageNumber - 1)" asp-route-pageSize="@Model.PageSize">
         Previous
     </a>
 
     @if (Model.TotalPages > 5 && Model.PageNumber > 3)
     {
-        <a class="page-link" asp-action="@Model.ActionName" asp-controller="@Model.ControllerName" asp-route-pageNumber="1">1</a>
+        <a class="page-link" asp-action="@Model.ActionName" asp-controller="@Model.ControllerName"
+           asp-route-pageNumber="1" asp-route-pageSize="@Model.PageSize">1</a>
         <span class="page-ellipsis">...</span>
     }
 
@@ -20,22 +22,26 @@
         }
         else
         {
-            <a class="page-link" asp-action="@Model.ActionName" asp-controller="@Model.ControllerName" asp-route-pageNumber="@i">@i</a>
+            <a class="page-link" asp-action="@Model.ActionName" asp-controller="@Model.ControllerName"
+               asp-route-pageNumber="@i" asp-route-pageSize="@Model.PageSize">@i</a>
         }
     }
 
     @if (Model.TotalPages > 5 && Model.PageNumber < Model.TotalPages - 2)
     {
         <span class="page-ellipsis">...</span>
-        <a class="page-link" asp-action="@Model.ActionName" asp-controller="@Model.ControllerName" asp-route-pageNumber="@Model.TotalPages">@Model.TotalPages</a>
+        <a class="page-link" asp-action="@Model.ActionName" asp-controller="@Model.ControllerName"
+           asp-route-pageNumber="@Model.TotalPages" asp-route-pageSize="@Model.PageSize">@Model.TotalPages</a>
     }
 
     <a class="page-link next @(Model.PageNumber == Model.TotalPages ? "disabled" : "")"
-       asp-action="@Model.ActionName" asp-controller="@Model.ControllerName" asp-route-pageNumber="@(Model.PageNumber + 1)">
+       asp-action="@Model.ActionName" asp-controller="@Model.ControllerName"
+       asp-route-pageNumber="@(Model.PageNumber + 1)" asp-route-pageSize="@Model.PageSize">
         Next
     </a>
 
     <form class="page-jump-form" asp-action="@Model.ActionName" asp-controller="@Model.ControllerName" method="get">
+        <input type="hidden" name="pageSize" value="@Model.PageSize" />
         <input type="number" name="pageNumber" min="1" max="@Model.TotalPages" placeholder="Go to..." class="page-jump-input" />
         <button type="submit" class="page-jump-submit">Go</button>
     </form>

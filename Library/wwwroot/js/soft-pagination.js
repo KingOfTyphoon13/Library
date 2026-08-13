@@ -17,7 +17,12 @@ document.addEventListener('submit', async function (e) {
     if (!pageNumber || pageNumber < 1) return;
 
     var url = new URL(form.action, window.location.href);
-    url.searchParams.set('pageNumber', pageNumber);
+    var formData = new FormData(form);
+    formData.set('pageNumber', pageNumber);
+    for (var pair of formData.entries()) {
+        url.searchParams.set(pair[0], pair[1]);
+    }
+
     await loadPage(url.toString(), pagination);
 });
 
