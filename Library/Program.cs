@@ -1,3 +1,4 @@
+using Library.DAL;
 using Library.Infrastructure.DI;
 using Serilog;
 
@@ -20,6 +21,9 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseStaticFiles();
+
 app.UseRouting();
 
 app.MapStaticAssets();
@@ -29,5 +33,9 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}")
     .WithStaticAssets();
 
+using (var scope = app.Services.CreateScope())
+{
+    await scope.ServiceProvider.GetRequiredService<DbInitializer>().InitializeAsync();
+}
 
 app.Run();

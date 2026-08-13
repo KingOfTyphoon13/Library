@@ -15,10 +15,10 @@ public static class PaginatedListHelper
     Func<T, HelperResult> itemTemplate)
     {
         var sb = new StringBuilder();
-        sb.Append("<div class=\"review-grid\">");
+        sb.Append("<div class=\"element-grid\">");
         foreach (var item in model.Items)
         {
-            sb.Append("<div class=\"review-card\">");
+            sb.Append("<div class=\"element-card\">");
 
             using (var itemWriter = new StringWriter())
             {

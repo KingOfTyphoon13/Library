@@ -1,4 +1,5 @@
-﻿using Library.DAL.DataAccess;
+﻿using Library.DAL;
+using Library.DAL.DataAccess;
 using Library.Domain.DataAccess;
 using Library.Domain.Services.AuthorsService;
 using Library.Domain.Services.BooksService;
@@ -20,6 +21,8 @@ public static class AddServicesWebApplicationBuilderExtension
         var services = builder.Services;
 
         services.AddOptions(configuration);
+
+        services.AddSingleton<DbInitializer>();
 
         services.AddSingleton<IConnectionMultiplexer>(sp =>
         {

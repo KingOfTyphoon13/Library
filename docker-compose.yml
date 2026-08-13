@@ -1,6 +1,54 @@
 services:
+  sql:
+    image: mcr.microsoft.com/mssql/server:2025-latest
+    ports:
+      - "${DB_PORT}:1433"
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "${DB_PASSWORD}"
+    volumes:
+      - sql-data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD", "/opt/mssql-tools18/bin/sqlcmd", "-S", "localhost", "-U", "${DB_USER}", "-P", "${DB_PASSWORD}", "-Q", "SELECT 1", "-C"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    
+  redis:
+    image: redis:7-alpine
+    environment:
+       REDIS_PASSWORD: "${REDIS_PASSWORD}"
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+      
+
   library:
     image: ${DOCKER_REGISTRY-}library
     build:
       context: .
       dockerfile: Library/Dockerfile
+    environment:
+      - ConnectionStrings__DBConnection=Server=sql;Database=${DB_NAME};User ID=${DB_USER};Password=${DB_PASSWORD};Pooling=True;MultipleActiveResultSets=True;Encrypt=True;TrustServerCertificate=True;Command Timeout=30;
+      - Redis__Host=${REDIS_HOST}
+      - Redis__Port=${REDIS_PORT}
+      - Redis__Password=${REDIS_PASSWORD}
+      - ASPNETCORE_ENVIRONMENT=${ENVIREMENT}
+    depends_on:
+      sql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+    sql-data:
+    redis-data:
+ 
+  

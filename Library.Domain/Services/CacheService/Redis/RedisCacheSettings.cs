@@ -13,7 +13,6 @@ public class RedisCacheSettings
     [Range(1, 65535)]
     public int Port { get; set; }
 
-    [Required]
     public string Password { get; set; } = default!;
 
     public int AbsoluteExpirationMinutes { get; set; }
