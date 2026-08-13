@@ -14,10 +14,14 @@
 
     @for (var i = Math.Max(1, Model.PageNumber - 1); i <= Math.Min(Model.TotalPages, Model.PageNumber + 1); i++)
     {
-        <a class="page-link @(i == Model.PageNumber ? "active" : "")"
-           asp-action="@Model.ActionName" asp-controller="@Model.ControllerName" asp-route-pageNumber="@i">
-            @i
-        </a>
+        if (i == Model.PageNumber)
+        {
+            <span class="page-link active">@i</span>
+        }
+        else
+        {
+            <a class="page-link" asp-action="@Model.ActionName" asp-controller="@Model.ControllerName" asp-route-pageNumber="@i">@i</a>
+        }
     }
 
     @if (Model.TotalPages > 5 && Model.PageNumber < Model.TotalPages - 2)
@@ -30,4 +34,9 @@
        asp-action="@Model.ActionName" asp-controller="@Model.ControllerName" asp-route-pageNumber="@(Model.PageNumber + 1)">
         Next
     </a>
+
+    <form class="page-jump-form" asp-action="@Model.ActionName" asp-controller="@Model.ControllerName" method="get">
+        <input type="number" name="pageNumber" min="1" max="@Model.TotalPages" placeholder="Go to..." class="page-jump-input" />
+        <button type="submit" class="page-jump-submit">Go</button>
+    </form>
 </nav>
