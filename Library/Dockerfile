@@ -29,4 +29,8 @@ RUN dotnet publish "./Library.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "Library.dll"]
+COPY Library/docker-entrypoint.sh /app/docker-entrypoint.sh
+USER root
+RUN chmod +x /app/docker-entrypoint.sh
+USER $APP_UID
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
